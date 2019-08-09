@@ -1,0 +1,133 @@
+﻿<Window x:Class="FlightTracker.Clients.WpfApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FlightTracker.Clients.WpfApp"
+        mc:Ignorable="d" FontSize="14"
+        Title="Flight Tracker" Height="880" Width="500"
+        Loaded="Window_Loaded" Closing="Window_Closing">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+            <TextBlock Text="Flight Tracker" Grid.ColumnSpan="2" FontSize="20" FontWeight="SemiBold" TextAlignment="Center" Margin="0,0,0,10" />
+
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Sim Connection: " />
+                <TextBlock Text="{Binding SimConnectionState}" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Web Connection: " />
+                <TextBlock Text="{Binding WebConnectionState}" />
+            </StackPanel>
+
+            <Grid>
+                <Grid.Resources>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Margin" Value="0,0,10,0" />
+                    </Style>
+                    <Style TargetType="TextBox">
+                        <Setter Property="Margin" Value="0,0,0,10" />
+                    </Style>
+                </Grid.Resources>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Text="Aircraft" Grid.Row="0" />
+                <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
+                    <TextBlock Text="{Binding AircraftData.Title}" />
+                    <TextBlock Text="{Binding AircraftData.Model}" />
+                    <TextBlock Text="{Binding AircraftData.Type}" />
+                    <TextBlock Text="{Binding AircraftData.TailNumber}" />
+                </StackPanel>
+                <TextBlock Text="Flight" Grid.Row="1" />
+                <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
+                    <TextBlock Text="{Binding AircraftData.Airline, Mode=OneWay}" />
+                    <TextBlock Text="{Binding AircraftData.FlightNumber, Mode=OneWay}" />
+                </StackPanel>
+                <TextBlock Text="Departure" Grid.Row="2" />
+                <TextBlock Text="{Binding FlightPlan.Departure.Name}" Grid.Row="2" Grid.Column="1" />
+                <TextBlock Text="Destination" Grid.Row="3" />
+                <TextBlock Text="{Binding FlightPlan.Destination.Name}" Grid.Row="3" Grid.Column="1" />
+            </Grid>
+        </StackPanel>
+
+        <ScrollViewer Margin="0,10,0,0" Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <StackPanel.Resources>
+                    <Style TargetType="TextBox">
+                        <Setter Property="IsReadOnly" Value="True" />
+                    </Style>
+                </StackPanel.Resources>
+
+                <TextBlock Text="Sim Time" />
+                <TextBox Text="{Binding FlightStatus.SimTime}" />
+                
+                <TextBlock Text="Latitude" />
+                <TextBox Text="{Binding FlightStatus.Latitude}" />
+
+                <TextBlock Text="Longitude" />
+                <TextBox Text="{Binding FlightStatus.Longitude}" />
+
+                <TextBlock Text="Altitude" />
+                <TextBox Text="{Binding FlightStatus.Altitude}" />
+
+                <TextBlock Text="Altitude above ground" />
+                <TextBox Text="{Binding FlightStatus.AltitudeAboveGround}" />
+                <TextBlock Text="Ground Speed" />
+                <TextBox Text="{Binding FlightStatus.GroundSpeed}" />
+
+                <TextBlock Text="IAS" />
+                <TextBox Text="{Binding FlightStatus.IndicatedAirSpeed}" />
+                <TextBlock Text="VS" />
+                <TextBox Text="{Binding FlightStatus.VerticalSpeed}" />
+
+                <TextBlock Text="Heading" />
+                <TextBox Text="{Binding FlightStatus.Heading}" />
+
+                <TextBlock Text="True Heading" />
+                <TextBox Text="{Binding FlightStatus.TrueHeading}" />
+
+                <TextBlock Text="Pitch" />
+                <TextBox Text="{Binding FlightStatus.Pitch}" />
+
+                <TextBlock Text="Bank" />
+                <TextBox Text="{Binding FlightStatus.Bank}" />
+
+                <TextBlock Text="Fuel" />
+                <TextBox Text="{Binding FlightStatus.FuelTotalQuantity}" />
+
+                <TextBlock Text="On the ground" />
+                <CheckBox IsChecked="{Binding FlightStatus.IsOnGround}"  />
+
+                <TextBlock Text="Autopilot" />
+                <CheckBox IsChecked="{Binding FlightStatus.IsAutopilotOn}"  />
+            </StackPanel>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="2">
+            <Label Content="Flight Name" />
+            <TextBox Text="{Binding Title, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" TextChanged="TextBox_TextChanged" />
+            <Button Click="ButtonScreenshot_Click">Screenshot</Button>
+            <Button Click="ButtonSave_Click">Save Flight</Button>
+            <Button Click="ButtonSaveAndNew_Click">New Flight</Button>
+            
+        </StackPanel>
+    </Grid>
+</Window>

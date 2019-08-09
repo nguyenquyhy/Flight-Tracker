@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.0.0-preview9.19423.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FlightTracker.Clients.Logics.Abstracts\FlightTracker.Clients.Logics.Abstracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Condition="'$(Configuration)' == 'Debug'" Include="LockheedMartin.Prepar3D.SimConnect">
+      <HintPath>C:\Program Files\Lockheed Martin\Prepar3D v4 SDK 4.5.12.30293\lib\SimConnect\managed\LockheedMartin.Prepar3D.SimConnect.Debug.dll</HintPath>
+    </Reference>
+    <Reference Condition="'$(Configuration)' == 'Release'" Include="LockheedMartin.Prepar3D.SimConnect">
+      <HintPath>C:\Program Files\Lockheed Martin\Prepar3D v4 SDK 4.5.12.30293\lib\SimConnect\managed\LockheedMartin.Prepar3D.SimConnect.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,272 @@
+﻿using FlightTracker.DTOs;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
+
+namespace FlightTracker.Clients.Logics
+{
+    public class FlightLogic
+    {
+        private const int SaveDelay = 5000;
+
+        private readonly ILogger<FlightLogic> logger;
+        private readonly FlightsAPIClient flightsAPIClient;
+        private readonly IImageUploader imageUploader;
+        private TaskCompletionSource<bool> tcsCrashReset = null;
+
+        private FlightData flightData = new FlightData();
+        private readonly List<AirportData> airports = new List<AirportData>();
+
+        int localTime = 0;
+        int zuluTime = 0;
+        long absoluteTime = 0;
+
+        DateTime? lastSave = null;
+
+        public FlightLogic(ILogger<FlightLogic> logger,
+            FlightsAPIClient flightsAPIClient,
+            IEnvironmentDataUpdater environmentDataUpdater,
+            IAirportUpdater airportUpdater,
+            IAircraftDataUpdater aircraftDataUpdater,
+            IFlightPlanUpdater flightPlanUpdater,
+            IFlightStatusUpdater flightStatusUpdater,
+            IImageUploader imageUploader)
+        {
+            this.logger = logger;
+            this.flightsAPIClient = flightsAPIClient;
+            this.imageUploader = imageUploader;
+            environmentDataUpdater.EnvironmentDataUpdated += EnvironmentDataUpdater_EnvironmentDataUpdated;
+            airportUpdater.AirportListUpdated += AirportUpdater_AirportListUpdated;
+            aircraftDataUpdater.AircraftDataUpdated += AircraftDataUpdater_AircraftDataUpdated;
+            flightPlanUpdater.FlightPlanUpdated += FlightPlanUpdater_FlightPlanUpdated;
+
+            flightStatusUpdater.FlightStatusUpdated += FlightStatusUpdater_FlightStatusUpdated;
+            flightStatusUpdater.Crashed += FlightStatusUpdater_CrashedAsync;
+            flightStatusUpdater.CrashReset += FlightStatusUpdater_CrashReset;
+        }
+
+        public async Task SaveAsync()
+        {
+            if (flightData != null && flightData.State == FlightState.Enroute)
+            {
+                logger.LogDebug("Saving flight");
+                await AddOrUpdateFlightAsync();
+            }
+        }
+
+        public async Task NewFlightAsync(bool crashed, string title)
+        {
+            // TODO: Flush current flight
+            if (flightData != null && flightData.State != FlightState.Started && flightData.Id != null)
+            {
+                logger.LogInformation("Trying to save existing flight");
+                await AddOrUpdateFlightAsync();
+            }
+
+            if (crashed)
+            {
+                tcsCrashReset = new TaskCompletionSource<bool>();
+                await tcsCrashReset.Task;
+                await Task.Delay(5000);
+            }
+
+            lastSave = null;
+            flightData = new FlightData
+            {
+                Title = title,
+                StartDateTime = DateTimeOffset.Now,
+                Aircraft = flightData?.Aircraft,
+                FlightPlan = flightData?.FlightPlan,
+                Airline = flightData?.Aircraft?.Airline,
+                FlightNumber = flightData?.Aircraft?.FlightNumber
+            };
+        }
+
+        public async Task ScreenshotAsync(string name, byte[] image)
+        {
+            var lastStatus = flightData?.Statuses?.LastOrDefault();
+            if (lastStatus != null)
+            {
+                var url = await imageUploader.UploadAsync(name, image);
+                lastStatus.ScreenshotUrl = url;
+            }
+        }
+
+        public void UpdateTitle(string title)
+        {
+            flightData.Title = title;
+        }
+
+        private void EnvironmentDataUpdater_EnvironmentDataUpdated(object sender, EnvironmentDataUpdatedEventArgs e)
+        {
+            localTime = e.LocalTime;
+            zuluTime = e.ZuluTime;
+            absoluteTime = e.AbsoluteTime;
+        }
+
+        private void AirportUpdater_AirportListUpdated(object sender, AirportListUpdatedEventArgs e)
+        {
+            logger.LogInformation("Receive Airport: " + string.Join(", ", e.Airports.Select(o => o.Icao)));
+            foreach (var airport in e.Airports)
+            {
+                if (!airports.Any(a => a.Icao == airport.Icao))
+                {
+                    airports.Add(airport);
+                }
+            }
+        }
+
+        private void AircraftDataUpdater_AircraftDataUpdated(object sender, AircraftDataUpdatedEventArgs e)
+        {
+            flightData.Aircraft = e.Data;
+        }
+
+        private void FlightPlanUpdater_FlightPlanUpdated(object sender, FlightPlanUpdatedEventArgs e)
+        {
+            flightData.FlightPlan = e.FlightPlan;
+        }
+
+        private async void FlightStatusUpdater_FlightStatusUpdated(object sender, FlightStatusUpdatedEventArgs e)
+        {
+            if (flightData.Statuses.Count > 0)
+            {
+                var lastStatus = flightData.Statuses.Last();
+
+                if (lastStatus.IsOnGround && !e.FlightStatus.IsOnGround && flightData.StatusTakeOff == null)
+                {
+                    // Took off
+                    logger.LogInformation("Aircraft has taken off");
+                    flightData.StatusTakeOff = e.FlightStatus;
+                    flightData.State = FlightState.Enroute;
+
+                    flightData.TakeOffDateTime = DateTimeOffset.Now;
+                    flightData.TakeOffLocalTime = localTime;
+                    flightData.TakeOffZuluTime = zuluTime;
+                    flightData.TakeOffAbsoluteTime = absoluteTime;
+
+                    // Try to determine airport
+                    if (airports != null && flightData.AirportFrom == null)
+                    {
+                        flightData.AirportFrom = GetNearestAirport(e);
+                    }
+
+                    await AddOrUpdateFlightAsync();
+                }
+                else if (!lastStatus.IsOnGround && e.FlightStatus.IsOnGround && flightData.StatusLanding == null)
+                {
+                    // Landing
+                    if (flightData.State == FlightState.Enroute)
+                    {
+                        logger.LogInformation("Aircraft has landed");
+                        flightData.StatusLanding = lastStatus;
+                        flightData.State = FlightState.Arrived;
+
+                        if (airports != null && flightData.AirportTo == null)
+                        {
+                            flightData.AirportTo = GetNearestAirport(e);
+                        }
+                    }
+
+                    await AddOrUpdateFlightAsync();
+                }
+                else
+                {
+                    // Try to reduce the number of status
+                    if (lastStatus.ScreenshotUrl == null)
+                    {
+                        if (e.FlightStatus.IsOnGround && e.FlightStatus.GroundSpeed < 1f && flightData.Statuses.Count == 0)
+                            return;
+                        if (e.FlightStatus.AltitudeAboveGround > 1000 && e.FlightStatus.SimTime - lastStatus.SimTime < 1f)
+                            return;
+                        if (e.FlightStatus.AltitudeAboveGround > 5000 && e.FlightStatus.SimTime - lastStatus.SimTime < 2f)
+                            return;
+                        if (e.FlightStatus.AltitudeAboveGround > 10000 && e.FlightStatus.SimTime - lastStatus.SimTime < 3f)
+                            return;
+                        if (e.FlightStatus.AltitudeAboveGround > 15000 && e.FlightStatus.SimTime - lastStatus.SimTime < 4f)
+                            return;
+                        if (e.FlightStatus.AltitudeAboveGround > 20000 && e.FlightStatus.SimTime - lastStatus.SimTime < 5f)
+                            return;
+                    }
+                }
+            }
+
+            flightData.Statuses.Add(e.FlightStatus);
+
+            if ((flightData.State == FlightState.Enroute || flightData.State == FlightState.Arrived) 
+                && lastSave.HasValue && DateTime.Now - lastSave.Value > TimeSpan.FromMilliseconds(SaveDelay))
+            {
+                await AddOrUpdateFlightAsync();
+            }
+        }
+
+        private async void FlightStatusUpdater_CrashedAsync(object sender, EventArgs e)
+        {
+            logger.LogInformation("Aircraft has crashed");
+            flightData.State = FlightState.Crashed;
+            flightData.AirportTo = null;
+
+            await NewFlightAsync(true, flightData.Title);
+        }
+
+        private void FlightStatusUpdater_CrashReset(object sender, EventArgs e)
+        {
+            if (tcsCrashReset != null)
+            {
+                tcsCrashReset.SetResult(true);
+            }
+        }
+
+        private async Task AddOrUpdateFlightAsync()
+        {
+            try
+            {
+                if (flightData.Id == null)
+                {
+                    var newData = await flightsAPIClient.PostAsync(flightData);
+
+                    // Copy data since it might be changed already;
+                    newData.Title = flightData.Title;
+                    newData.Aircraft = flightData.Aircraft;
+                    newData.FlightPlan = flightData.FlightPlan;
+                    newData.Statuses = flightData.Statuses;
+
+                    flightData = newData;
+                }
+                else
+                {
+                    var savedData = await flightsAPIClient.PutAsync(flightData.Id, flightData);
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                logger.LogError("Cannot add/update flight!", ex);
+            }
+            finally
+            {
+                lastSave = DateTime.Now;
+            }
+        }
+
+        private string GetNearestAirport(FlightStatusUpdatedEventArgs e)
+        {
+            string nearestIcao = null;
+            var minDist = double.MaxValue;
+            foreach (var airport in airports.ToList())
+            {
+                var dist = GpsHelper.CalculateDistance(
+                    e.FlightStatus.Latitude, e.FlightStatus.Longitude, e.FlightStatus.Altitude,
+                    airport.Latitude, airport.Longitude, airport.Altitude);
+                if (dist < minDist)
+                {
+                    nearestIcao = airport.Icao;
+                    minDist = dist;
+                }
+            }
+
+            return nearestIcao;
+        }
+    }
+}

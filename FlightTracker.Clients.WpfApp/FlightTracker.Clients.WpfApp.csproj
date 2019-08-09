@@ -1,0 +1,51 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <Authors>Nguyen Quy Hy</Authors>
+    <Product>Flight Tracker Clients</Product>
+    <Company />
+    <RuntimeIdentifier>win10-x64</RuntimeIdentifier>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeSymbolsInSingleFile>true</IncludeSymbolsInSingleFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="icon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="icon.ico">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.4">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.0.0-preview9.19423.4" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.0.0-preview9.19423.4" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="3.0.0-preview9.19423.4" />
+    <PackageReference Include="Serilog.AspNetCore" Version="3.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="4.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FlightTracker.Clients.Logics.Abstracts\FlightTracker.Clients.Logics.Abstracts.csproj" />
+    <ProjectReference Include="..\FlightTracker.Clients.Logics.AzureStorage\FlightTracker.Clients.Logics.AzureStorage.csproj" />
+    <ProjectReference Include="..\FlightTracker.Clients.Logics.SimConnect\FlightTracker.Clients.Logics.SimConnect.csproj" />
+    <ProjectReference Include="..\FlightTracker.Clients.Logics\FlightTracker.Clients.Logics.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
