@@ -7,11 +7,12 @@ import { Layout } from './components/Layout';
 import Home from './components/Home';
 import { Flights } from './components/Flights';
 import Flight from './components/Flight';
+import Aircrafts from './components/Aircrafts';
 import { Admin } from './components/Admin';
 
 import './custom.css'
 
-import { ServicesContext, GoogleMapsContext } from './Context';
+import { ServicesContext, ConfigsContext } from './Context';
 import { Configs } from './services/Models';
 
 interface State {
@@ -37,14 +38,15 @@ class App extends Component<any, State> {
     render() {
         return (
             <ServicesContext.Provider value={{ api: this.api }}>
-                <GoogleMapsContext.Provider value={{ key: this.state.configs ? this.state.configs.googleMapsKey : undefined }}>
+                <ConfigsContext.Provider value={{ configs: this.state.configs }}>
                     <Layout>
                         <Route exact path='/' component={Home} />
                         <Route path='/flights' exact component={Flights} />
                         <Route path='/flights/:id' component={Flight} />
+                        <Route path='/aircrafts' exact component={Aircrafts} />
                         <PrivateRoute path='/admin' component={Admin} />
                     </Layout>
-                </GoogleMapsContext.Provider>
+                </ConfigsContext.Provider>
             </ServicesContext.Provider>
         );
     }

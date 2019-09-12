@@ -38,11 +38,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="ClientApp\src\components\Aircrafts.tsx" />
     <None Remove="ClientApp\src\components\FlightsTable.tsx" />
     <None Remove="ClientApp\src\components\hoc\GoogleApiWrapper.jsx" />
     <None Remove="ClientApp\src\components\hoc\GooglePageWrapper.tsx" />
     <None Remove="ClientApp\src\components\hoc\ScriptCache.js" />
-    <None Remove="ClientApp\src\components\Map.tsx" />
     <None Remove="ClientApp\src\components\RecentFlights.tsx" />
     <None Remove="ClientApp\src\Context.ts" />
     <None Remove="ClientApp\src\services\ApiService.ts" />
@@ -62,11 +62,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <TypeScriptCompile Include="ClientApp\src\components\Aircrafts.tsx" />
     <TypeScriptCompile Include="ClientApp\src\components\FlightsTable.tsx" />
     <TypeScriptCompile Include="ClientApp\src\components\hoc\GoogleApiWrapper.jsx" />
     <TypeScriptCompile Include="ClientApp\src\components\hoc\GooglePageWrapper.tsx" />
     <TypeScriptCompile Include="ClientApp\src\components\hoc\ScriptCache.js" />
-    <TypeScriptCompile Include="ClientApp\src\components\Map.tsx" />
     <TypeScriptCompile Include="ClientApp\src\components\RecentFlights.tsx" />
     <TypeScriptCompile Include="ClientApp\src\Context.ts" />
     <TypeScriptCompile Include="ClientApp\src\services\ApiService.ts" />

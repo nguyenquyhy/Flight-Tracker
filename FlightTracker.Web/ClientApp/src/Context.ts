@@ -1,5 +1,6 @@
 ﻿import React from 'react';
 import ApiService from './services/ApiService';
+import { Configs } from './services/Models';
 
 interface ServicesContext {
     api: ApiService;
@@ -7,8 +8,8 @@ interface ServicesContext {
 
 export const ServicesContext = React.createContext<ServicesContext>({ api: new ApiService() });
 
-interface GoogleMapsContext {
-    key?: string;
+interface ConfigsContext {
+    configs?: Configs;
 }
 
-export const GoogleMapsContext = React.createContext<GoogleMapsContext>({})
+export const ConfigsContext = React.createContext<ConfigsContext>({})

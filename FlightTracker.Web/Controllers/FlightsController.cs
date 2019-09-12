@@ -1,5 +1,6 @@
 ﻿using FlightTracker.DTOs;
 using FlightTracker.Web.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Collections.Generic;
@@ -54,6 +55,7 @@ namespace FlightTracker.Web.Controllers
             return flightStorage.UpdateAsync(id, flightData);
         }
 
+        [Authorize]
         [HttpDelete("{id}")]
         public Task Delete(string id)
         {

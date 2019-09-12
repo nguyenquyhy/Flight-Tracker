@@ -23,9 +23,15 @@ export class Flights extends Component<any, State> {
         this.populateData();
     }
 
+    handleDeleted(id: string) {
+        if (this.state.flights) {
+            this.setState({ flights: this.state.flights.filter(f => f.id !== id) });
+        }
+    }
+
     renderFlightsTable(flights: FlightData[]) {
         return (
-            <FlightsTable flights={flights} />
+            <FlightsTable flights={flights} onDeleted={id => this.handleDeleted(id)} />
         );
     }
 

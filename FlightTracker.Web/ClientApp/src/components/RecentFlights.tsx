@@ -26,10 +26,16 @@ export default class RecentFlight extends Component<any, State> {
         });
     }
 
+    handleDeleted(id: string) {
+        if (this.state.flights) {
+            this.setState({ flights: this.state.flights.filter(f => f.id !== id) });
+        }
+    }
+
     public render() {
         if (!this.state.flights) return null;
         return <>
-            <FlightsTable flights={this.state.flights} />
+            <FlightsTable flights={this.state.flights} onDeleted={id => this.handleDeleted(id)} />
             <Link to='/flights'>View more</Link>
         </>
     }

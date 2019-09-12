@@ -1,5 +1,10 @@
 ﻿export interface Configs {
     googleMapsKey: string;
+    permissions: { [id: string]: Permission }
+}
+
+export interface Permission {
+    delete: boolean;
 }
 
 export interface FlightData {

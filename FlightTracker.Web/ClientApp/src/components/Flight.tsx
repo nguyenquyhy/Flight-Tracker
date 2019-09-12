@@ -4,10 +4,11 @@ import SimpleLightBox from "simple-lightbox";
 import "simple-lightbox/dist/simpleLightbox.css";
 import GooglePageWrapper from "./hoc/GooglePageWrapper";
 import { FlightData, FlightStatus } from "../services/Models";
-import { ServicesContext } from "../Context";
+import { ServicesContext, ConfigsContext } from "../Context";
 
 interface State {
     loading: boolean;
+    deleting: boolean;
     flight: FlightData | null;
 }
 
@@ -25,54 +26,74 @@ class Flight extends Component<Props, State> {
 
     constructor(props) {
         super(props);
-        this.state = { flight: null, loading: true };
+        this.state = { flight: null, loading: true, deleting: false };
     }
 
     componentDidMount() {
         this.populateData();
     }
 
+    onDelete() {
+        if (window.confirm('Are you sure to delete the flight?')) {
+            this.setState({ deleting: true }, async () => {
+                await this.context.api.deleteFlight(this.props.match.params.id);
+                this.props.history.goBack();
+            })
+        }
+    }
+
     public render() {
         if (this.state.loading) return <p><em>Loading...</em></p>;
 
-        if (!this.state.flight) return <p><strong>Cannot load flight</strong></p>;
+        return <ConfigsContext.Consumer>
+            {context => {
+                const flight = this.state.flight;
+                if (!flight) return <p><strong>Cannot load flight</strong></p>;
 
-        return <>
-            <h2>{this.state.flight.title}</h2>
-            <table className="table table-strip">
-                <thead>
-                    <tr>
-                        <th>Information</th><th>Value</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td>From</td><td>{this.state.flight.airportFrom}</td></tr>
-                    <tr><td>To</td><td>{this.state.flight.airportTo}</td></tr>
-                    {this.state.flight.aircraft && <tr><td>Aircraft</td><td>{this.state.flight.aircraft.title}</td></tr>}
-                    <tr><td>Flight Number</td><td>{this.state.flight.airline} {this.state.flight.flightNumber}</td></tr>
-                    <tr><td>State</td><td>{this.state.flight.state}</td></tr>
-                    {this.state.flight.statusTakeOff && this.state.flight.statusLanding ?
-                        <>
-                            <tr><td>Take-off/Landing Time</td><td>{Flight.secondToTime(this.state.flight.takeOffLocalTime)} - {Flight.secondToTime(this.state.flight.takeOffLocalTime + this.state.flight.statusLanding.simTime - this.state.flight.statusTakeOff.simTime)}</td></tr>
-                            <tr><td>Full Duration</td><td>{Flight.formatDuration(this.state.flight.statusLanding.simTime - this.state.flight.statusTakeOff.simTime)}</td></tr>
-                            <tr><td>Fuel Used</td><td>{Math.round((this.state.flight.statusTakeOff.fuelTotalQuantity - this.state.flight.statusLanding.fuelTotalQuantity) * 10) / 10} lb</td></tr>
-                        </> :
-                        <>
-                            <tr><td>Take-off Time</td><td>{Flight.secondToTime(this.state.flight.takeOffLocalTime)}</td></tr>
-                        </>
-                    }
-                    {this.state.flight.statusTakeOff && <tr><td>Take-off IAS</td><td>{this.state.flight.statusTakeOff.indicatedAirSpeed}</td></tr>}
-                    {this.state.flight.statusLanding &&
-                        <>
-                            <tr><td>Landing IAS</td><td>{this.state.flight.statusLanding.indicatedAirSpeed}</td></tr>
-                            <tr><td>Landing VS</td><td>{this.state.flight.statusLanding.verticalSpeed}</td></tr>
-                        </>
-                    }
-                </tbody>
-            </table>
-            <p><em>*Blue: on the ground. Purple: autopilot off. Green: autopilot on</em></p>
-            <div id="map" style={{ width: '100%', height: 800 }}></div>
-        </>
+                const canDelete = context.configs ? context.configs.permissions["Flight"].delete : false;
+
+                return <>
+                    <h2>{flight.title}</h2>
+                    <div>
+                        {canDelete && <button className="btn btn-danger" onClick={() => this.onDelete()} disabled={this.state.deleting}>{this.state.deleting ? "Deleting..." : "Delete"}</button>}
+                    </div>
+
+                    <table className="table table-strip">
+                        <thead>
+                            <tr>
+                                <th>Information</th><th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>From</td><td>{flight.airportFrom}</td></tr>
+                            <tr><td>To</td><td>{flight.airportTo}</td></tr>
+                            {flight.aircraft && <tr><td>Aircraft</td><td>{flight.aircraft.title}</td></tr>}
+                            <tr><td>Flight Number</td><td>{flight.airline} {flight.flightNumber}</td></tr>
+                            <tr><td>State</td><td>{flight.state}</td></tr>
+                            {flight.statusTakeOff && flight.statusLanding ?
+                                <>
+                                    <tr><td>Take-off/Landing Time</td><td>{Flight.secondToTime(flight.takeOffLocalTime)} - {Flight.secondToTime(flight.takeOffLocalTime + flight.statusLanding.simTime - flight.statusTakeOff.simTime)}</td></tr>
+                                    <tr><td>Full Duration</td><td>{Flight.formatDuration(flight.statusLanding.simTime - flight.statusTakeOff.simTime)}</td></tr>
+                                    <tr><td>Fuel Used</td><td>{Math.round((flight.statusTakeOff.fuelTotalQuantity - flight.statusLanding.fuelTotalQuantity) * 10) / 10} lb</td></tr>
+                                </> :
+                                <>
+                                    <tr><td>Take-off Time</td><td>{Flight.secondToTime(flight.takeOffLocalTime)}</td></tr>
+                                </>
+                            }
+                            {flight.statusTakeOff && <tr><td>Take-off IAS</td><td>{flight.statusTakeOff.indicatedAirSpeed}</td></tr>}
+                            {flight.statusLanding &&
+                                <>
+                                    <tr><td>Landing IAS</td><td>{flight.statusLanding.indicatedAirSpeed}</td></tr>
+                                    <tr><td>Landing VS</td><td>{flight.statusLanding.verticalSpeed}</td></tr>
+                                </>
+                            }
+                        </tbody>
+                    </table>
+                    <p><em>*Blue: on the ground. Purple: autopilot off. Green: autopilot on</em></p>
+                    <div id="map" style={{ width: '100%', height: 800 }}></div>
+                </>
+            }}
+        </ConfigsContext.Consumer>
     }
 
     async populateData() {
