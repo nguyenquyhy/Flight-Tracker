@@ -22,6 +22,9 @@ export default class ApiService {
         const response = await fetch(`api/Flights/${id}`, {
             method: 'delete'
         });
+        if (!response.ok) {
+            throw new Error();
+        }
     }
 
     async getAircrafts() {

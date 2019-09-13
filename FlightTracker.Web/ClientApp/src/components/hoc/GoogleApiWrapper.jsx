@@ -1,10 +1,7 @@
 ﻿import React from 'react';
-import ReactDOM from 'react-dom';
 
 import ScriptCache from './ScriptCache';
 import GoogleApi from './GoogleApi';
-
-const defaultMapConfig = {};
 
 const serialize = obj => JSON.stringify(obj);
 const isSame = (obj1, obj2) => obj1 === obj2 || serialize(obj1) === serialize(obj2);
@@ -53,10 +50,10 @@ export const wrapper = input => WrappedComponent => {
             };
         }
 
-        componentWillReceiveProps(props) {
+        static getDerivedStateFromProps(props, state) {
             // Do not update input if it's not dynamic
             if (typeof input !== 'function') {
-                return;
+                return null;
             }
 
             // Get options to compare
@@ -65,7 +62,7 @@ export const wrapper = input => WrappedComponent => {
 
             // Ignore when options are not changed
             if (isSame(options, prevOptions)) {
-                return;
+                return null;
             }
 
             // Initialize with new options
@@ -73,11 +70,11 @@ export const wrapper = input => WrappedComponent => {
 
             // Save new options in component state,
             // and remove information about previous API handlers
-            this.setState({
+            return {
                 options: options,
                 loaded: false,
                 google: null
-            });
+            };
         }
 
         initialize(options) {

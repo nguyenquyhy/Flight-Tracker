@@ -12,14 +12,9 @@
 
     const googleVersion = opts.version || '3.31';
 
-    let script = null;
-    let google = (typeof window !== 'undefined' && window.google) || null;
-    let loading = false;
     let channel = null;
     let language = opts.language;
     let region = opts.region || null;
-
-    let onLoadEvents = [];
 
     const url = () => {
         let url = URL;
