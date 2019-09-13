@@ -1,7 +1,6 @@
 ﻿using FlightTracker.Web.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using System.Collections.Generic;
 
 namespace FlightTracker.Web.Controllers
 {
@@ -26,6 +25,7 @@ namespace FlightTracker.Web.Controllers
                 {
                     ["Flight"] = new PermissionViewModel
                     {
+                        Edit = User.Identity.IsAuthenticated,
                         Delete = User.Identity.IsAuthenticated
                     }
                 }

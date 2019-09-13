@@ -42,6 +42,22 @@ class Flight extends Component<Props, State> {
         }
     }
 
+    async handleSaveTitle(value: string) {
+        const flight = await this.context.api.patchFlight(this.props.match.params.id, {
+            title: value
+        });
+
+        this.setState({ flight: flight });
+    }
+
+    async handleSaveDescription(value: string) {
+        const flight = await this.context.api.patchFlight(this.props.match.params.id, {
+            description: value
+        });
+
+        this.setState({ flight: flight });
+    }
+
     public render() {
         if (this.state.loading) return <p><em>Loading...</em></p>;
 
@@ -50,13 +66,16 @@ class Flight extends Component<Props, State> {
                 const flight = this.state.flight;
                 if (!flight) return <p><strong>Cannot load flight</strong></p>;
 
+                const canEdit = context.configs ? context.configs.permissions["Flight"].edit : false;
                 const canDelete = context.configs ? context.configs.permissions["Flight"].delete : false;
 
                 return <>
-                    <h2>{flight.title}</h2>
-                    <div>
-                        {canDelete && <button className="btn btn-danger" onClick={() => this.onDelete()} disabled={this.state.deleting}>{this.state.deleting ? "Deleting..." : "Delete"}</button>}
+                    <div style={{ float: 'right' }}>
+                        {canDelete && <button className="btn btn-link" onClick={() => this.onDelete()} disabled={this.state.deleting}>{this.state.deleting ? "Deleting..." : "Delete"}</button>}
                     </div>
+                    <TextInput type={TextInputType.Title} title='Title' disabled={!canEdit} value={flight.title || ''} onSave={value => this.handleSaveTitle(value)} />
+
+                    <TextInput type={TextInputType.TextArea} title='Description' disabled={!canEdit} value={flight.description || ''} onSave={value => this.handleSaveDescription(value)} />
 
                     <table className="table table-strip">
                         <thead>
@@ -274,3 +293,76 @@ export const statusToThickness = (status: FlightStatus) => {
 }
 
 export default GooglePageWrapper(Flight);
+
+
+interface TextInputState {
+    hovering: boolean;
+    editing: boolean;
+
+    value: string;
+}
+
+interface TextInputProps {
+    title: string;
+    value: string;
+    onSave: (value: string) => void;
+    type: TextInputType;
+    disabled?: boolean;
+}
+
+enum TextInputType {
+    Title,
+    TextArea
+}
+
+class TextInput extends Component<TextInputProps, TextInputState> {
+    constructor(props: TextInputProps) {
+        super(props);
+
+        this.state = { hovering: false, editing: false, value: props.value }
+    }
+
+    handleCancel() {
+        this.setState({ editing: false, value: this.props.value })
+    }
+
+    handleSave() {
+        this.props.onSave(this.state.value)
+        this.setState({ editing: false })
+    }
+
+    public render() {
+        switch (this.props.type) {
+            case TextInputType.Title:
+                if (this.props.disabled)
+                    return <h2>{this.props.value}</h2>;
+                if (!this.state.editing) {
+                    if (!this.state.value)
+                        return <h2 onClick={() => this.setState({ editing: true })}>Click to enter {this.props.title}</h2>;
+                    return <h2 onClick={() => this.setState({ editing: true })}>{this.props.value}</h2>;
+                }
+                return <div className="input-group" style={{ marginBottom: 8, width: 'calc(100% - 100px)' }}>
+                    <div className="input-group-prepend">
+                        <button className="btn btn-sm btn-primary" onClick={e => this.handleSave()}>Save</button>
+                        <button className="btn btn-sm btn-warning" onClick={e => this.handleCancel()}>Cancel</button>
+                    </div>
+                    <input className="form-control" value={this.state.value} onChange={e => this.setState({ value: e.target.value, editing: true })} />
+                </div>
+            case TextInputType.TextArea:
+                if (this.props.disabled)
+                    return <p>{this.props.value}</p>;
+                if (!this.state.editing) {
+                    if (!this.state.value)
+                        return <p onClick={() => this.setState({ editing: true })}><em>Click to enter {this.props.title}</em></p>;
+                    return <p onClick={() => this.setState({ editing: true })}>{this.props.value}</p>;
+                }
+                return <div style={{ marginBottom: 10 }}>
+                    <textarea value={this.state.value} placeholder={'Enter ' + this.props.title} className="form-control" onChange={e => this.setState({ value: e.target.value, editing: true })} />
+                    <div>
+                        <button className="btn btn-sm btn-primary" onClick={e => this.handleSave()}>Save</button>
+                        <button className="btn btn-sm btn-warning" onClick={e => this.handleCancel()}>Cancel</button>
+                    </div>
+                </div>
+        }
+    }
+}

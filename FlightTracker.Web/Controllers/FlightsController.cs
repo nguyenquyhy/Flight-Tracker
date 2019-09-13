@@ -55,6 +55,12 @@ namespace FlightTracker.Web.Controllers
             return flightStorage.UpdateAsync(id, flightData);
         }
 
+        [HttpPatch("{id}")]
+        public Task<FlightData> Patch(string id, [FromBody] FlightData flightData)
+        {
+            return flightStorage.PatchAsync(id, flightData);
+        }
+
         [Authorize]
         [HttpDelete("{id}")]
         public Task Delete(string id)

@@ -70,6 +70,28 @@ namespace FlightTracker.Web.Data
             }
         }
 
+        public async Task<FlightData> PatchAsync(string id, FlightData data)
+        {
+            try
+            {
+                await flightsSm.WaitAsync();
+
+                var flights = await LoadAsync();
+
+                var flight = flights.First(o => o.Id == id);
+                if (data.Title != null) flight.Title = data.Title;
+                if (data.Description != null) flight.Description = data.Description;
+
+                await SaveAsync(flights);
+
+                return flight;
+            }
+            finally
+            {
+                flightsSm.Release();
+            }
+        }
+
         public async Task<bool> DeleteAsync(string id)
         {
             try

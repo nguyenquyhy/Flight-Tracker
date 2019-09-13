@@ -4,12 +4,14 @@
 }
 
 export interface Permission {
+    edit: boolean;
     delete: boolean;
 }
 
 export interface FlightData {
     id: string;
     title?: string;
+    description?: string;
 
     airline: string;
     flightNumber: string;

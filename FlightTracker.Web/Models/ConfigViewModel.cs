@@ -11,6 +11,7 @@ namespace FlightTracker.Web.Models
 
     public class PermissionViewModel
     {
+        public bool Edit { get; set; }
         public bool Delete { get; set; }
     }
 }

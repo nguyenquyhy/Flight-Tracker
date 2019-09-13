@@ -10,6 +10,7 @@ namespace FlightTracker.Web.Data
         Task<FlightData> GetAsync(string id);
         Task<FlightData> AddAsync(FlightData data);
         Task<FlightData> UpdateAsync(string id, FlightData data);
+        Task<FlightData> PatchAsync(string id, FlightData data);
         Task<bool> DeleteAsync(string id);
     }
 }

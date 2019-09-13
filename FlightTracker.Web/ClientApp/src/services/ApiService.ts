@@ -1,5 +1,9 @@
 ﻿import { Configs, FlightData, AircraftData } from "./Models";
 
+type Partial<T> = {
+    [P in keyof T]?: T[P];
+}
+
 export default class ApiService {
     async getConfigs() {
         const response = await fetch('api/Configs');
@@ -16,6 +20,18 @@ export default class ApiService {
         if (limit) url += '?limit=' + limit;
         const response = await fetch(url);
         return await response.json() as FlightData[];
+    }
+
+    async patchFlight(id: string, flight: Partial<FlightData>) {
+        let url = `api/Flights/${id}`;
+        const response = await fetch(url, {
+            method: 'patch',
+            body: JSON.stringify(flight),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        return await response.json() as FlightData;
     }
 
     async deleteFlight(id: string) {
