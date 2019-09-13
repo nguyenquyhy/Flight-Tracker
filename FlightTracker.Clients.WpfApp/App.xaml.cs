@@ -64,6 +64,7 @@ namespace FlightTracker.Clients.WpfApp
             services.AddSingleton<FlightsAPIClient>();
             services.AddSingleton<FlightLogic>();
             services.AddSingleton<IImageUploader, AzureImageUploader>();
+            services.AddSingleton<TestLogic>();
 
             services.AddTransient(typeof(MainWindow));
         }

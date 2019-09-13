@@ -15,111 +15,123 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <StackPanel>
-            <TextBlock Text="Flight Tracker" Grid.ColumnSpan="2" FontSize="20" FontWeight="SemiBold" TextAlignment="Center" Margin="0,0,0,10" />
+        <TextBlock Text="Flight Tracker" FontSize="20" FontWeight="SemiBold" TextAlignment="Center" Margin="0,0,0,10" />
+        
+        <TabControl Grid.Row="1">
+            <TabItem Header="Connection">
+                <StackPanel Margin="10">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Sim Connection: " />
+                        <TextBlock Text="{Binding SimConnectionState}" />
+                    </StackPanel>
 
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Sim Connection: " />
-                <TextBlock Text="{Binding SimConnectionState}" />
-            </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Web Connection: " />
+                        <TextBlock Text="{Binding WebConnectionState}" />
+                    </StackPanel>
 
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Web Connection: " />
-                <TextBlock Text="{Binding WebConnectionState}" />
-            </StackPanel>
+                    <Grid>
+                        <Grid.Resources>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Margin" Value="0,0,10,0" />
+                            </Style>
+                            <Style TargetType="TextBox">
+                                <Setter Property="Margin" Value="0,0,0,10" />
+                            </Style>
+                        </Grid.Resources>
 
-            <Grid>
-                <Grid.Resources>
-                    <Style TargetType="TextBlock">
-                        <Setter Property="Margin" Value="0,0,10,0" />
-                    </Style>
-                    <Style TargetType="TextBox">
-                        <Setter Property="Margin" Value="0,0,0,10" />
-                    </Style>
-                </Grid.Resources>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
 
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-
-                <TextBlock Text="Aircraft" Grid.Row="0" />
-                <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
-                    <TextBlock Text="{Binding AircraftData.Title}" />
-                    <TextBlock Text="{Binding AircraftData.Model}" />
-                    <TextBlock Text="{Binding AircraftData.Type}" />
-                    <TextBlock Text="{Binding AircraftData.TailNumber}" />
+                        <TextBlock Text="Aircraft" Grid.Row="0" />
+                        <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
+                            <TextBlock Text="{Binding AircraftData.Title}" />
+                            <TextBlock Text="{Binding AircraftData.Model}" />
+                            <TextBlock Text="{Binding AircraftData.Type}" />
+                            <TextBlock Text="{Binding AircraftData.TailNumber}" />
+                        </StackPanel>
+                        <TextBlock Text="Flight" Grid.Row="1" />
+                        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
+                            <TextBlock Text="{Binding AircraftData.Airline, Mode=OneWay}" />
+                            <TextBlock Text="{Binding AircraftData.FlightNumber, Mode=OneWay}" />
+                        </StackPanel>
+                        <TextBlock Text="Departure" Grid.Row="2" />
+                        <TextBlock Text="{Binding FlightPlan.Departure.Name}" Grid.Row="2" Grid.Column="1" />
+                        <TextBlock Text="Destination" Grid.Row="3" />
+                        <TextBlock Text="{Binding FlightPlan.Destination.Name}" Grid.Row="3" Grid.Column="1" />
+                    </Grid>
                 </StackPanel>
-                <TextBlock Text="Flight" Grid.Row="1" />
-                <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
-                    <TextBlock Text="{Binding AircraftData.Airline, Mode=OneWay}" />
-                    <TextBlock Text="{Binding AircraftData.FlightNumber, Mode=OneWay}" />
+            </TabItem>
+            
+            <TabItem Header="Flight Status">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="10">
+                        <StackPanel.Resources>
+                            <Style TargetType="TextBox">
+                                <Setter Property="IsReadOnly" Value="True" />
+                            </Style>
+                        </StackPanel.Resources>
+
+                        <TextBlock Text="Sim Time" />
+                        <TextBox Text="{Binding FlightStatus.SimTime}" />
+
+                        <TextBlock Text="Latitude" />
+                        <TextBox Text="{Binding FlightStatus.Latitude}" />
+
+                        <TextBlock Text="Longitude" />
+                        <TextBox Text="{Binding FlightStatus.Longitude}" />
+
+                        <TextBlock Text="Altitude" />
+                        <TextBox Text="{Binding FlightStatus.Altitude}" />
+
+                        <TextBlock Text="Altitude above ground" />
+                        <TextBox Text="{Binding FlightStatus.AltitudeAboveGround}" />
+                        <TextBlock Text="Ground Speed" />
+                        <TextBox Text="{Binding FlightStatus.GroundSpeed}" />
+
+                        <TextBlock Text="IAS" />
+                        <TextBox Text="{Binding FlightStatus.IndicatedAirSpeed}" />
+                        <TextBlock Text="VS" />
+                        <TextBox Text="{Binding FlightStatus.VerticalSpeed}" />
+
+                        <TextBlock Text="Heading" />
+                        <TextBox Text="{Binding FlightStatus.Heading}" />
+
+                        <TextBlock Text="True Heading" />
+                        <TextBox Text="{Binding FlightStatus.TrueHeading}" />
+
+                        <TextBlock Text="Pitch" />
+                        <TextBox Text="{Binding FlightStatus.Pitch}" />
+
+                        <TextBlock Text="Bank" />
+                        <TextBox Text="{Binding FlightStatus.Bank}" />
+
+                        <TextBlock Text="Fuel" />
+                        <TextBox Text="{Binding FlightStatus.FuelTotalQuantity}" />
+
+                        <TextBlock Text="On the ground" />
+                        <CheckBox IsChecked="{Binding FlightStatus.IsOnGround}"  />
+
+                        <TextBlock Text="Autopilot" />
+                        <CheckBox IsChecked="{Binding FlightStatus.IsAutopilotOn}"  />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Test">
+                <StackPanel Margin="10">
+                    <Button Content="Test Storage Connection" Click="ButtonTestStorage_Click" />
                 </StackPanel>
-                <TextBlock Text="Departure" Grid.Row="2" />
-                <TextBlock Text="{Binding FlightPlan.Departure.Name}" Grid.Row="2" Grid.Column="1" />
-                <TextBlock Text="Destination" Grid.Row="3" />
-                <TextBlock Text="{Binding FlightPlan.Destination.Name}" Grid.Row="3" Grid.Column="1" />
-            </Grid>
-        </StackPanel>
-
-        <ScrollViewer Margin="0,10,0,0" Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <StackPanel>
-                <StackPanel.Resources>
-                    <Style TargetType="TextBox">
-                        <Setter Property="IsReadOnly" Value="True" />
-                    </Style>
-                </StackPanel.Resources>
-
-                <TextBlock Text="Sim Time" />
-                <TextBox Text="{Binding FlightStatus.SimTime}" />
-                
-                <TextBlock Text="Latitude" />
-                <TextBox Text="{Binding FlightStatus.Latitude}" />
-
-                <TextBlock Text="Longitude" />
-                <TextBox Text="{Binding FlightStatus.Longitude}" />
-
-                <TextBlock Text="Altitude" />
-                <TextBox Text="{Binding FlightStatus.Altitude}" />
-
-                <TextBlock Text="Altitude above ground" />
-                <TextBox Text="{Binding FlightStatus.AltitudeAboveGround}" />
-                <TextBlock Text="Ground Speed" />
-                <TextBox Text="{Binding FlightStatus.GroundSpeed}" />
-
-                <TextBlock Text="IAS" />
-                <TextBox Text="{Binding FlightStatus.IndicatedAirSpeed}" />
-                <TextBlock Text="VS" />
-                <TextBox Text="{Binding FlightStatus.VerticalSpeed}" />
-
-                <TextBlock Text="Heading" />
-                <TextBox Text="{Binding FlightStatus.Heading}" />
-
-                <TextBlock Text="True Heading" />
-                <TextBox Text="{Binding FlightStatus.TrueHeading}" />
-
-                <TextBlock Text="Pitch" />
-                <TextBox Text="{Binding FlightStatus.Pitch}" />
-
-                <TextBlock Text="Bank" />
-                <TextBox Text="{Binding FlightStatus.Bank}" />
-
-                <TextBlock Text="Fuel" />
-                <TextBox Text="{Binding FlightStatus.FuelTotalQuantity}" />
-
-                <TextBlock Text="On the ground" />
-                <CheckBox IsChecked="{Binding FlightStatus.IsOnGround}"  />
-
-                <TextBlock Text="Autopilot" />
-                <CheckBox IsChecked="{Binding FlightStatus.IsAutopilotOn}"  />
-            </StackPanel>
-        </ScrollViewer>
+            </TabItem>
+        </TabControl>
 
         <StackPanel Grid.Row="2">
             <Label Content="Flight Name" />

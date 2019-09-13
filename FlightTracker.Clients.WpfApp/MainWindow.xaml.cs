@@ -10,6 +10,7 @@ namespace FlightTracker.Clients.WpfApp
     {
         private readonly SignalRLogic signalR;
         private readonly FlightLogic flightLogic;
+        private readonly TestLogic testLogic;
         private readonly IFlightStatusUpdater flightStatusUpdater;
         private readonly FlightInfoViewModel viewModel;
         private FileSystemWatcher watcher;
@@ -18,6 +19,7 @@ namespace FlightTracker.Clients.WpfApp
             FlightInfoViewModel viewModel,
             SignalRLogic signalR,
             FlightLogic flightLogic,
+            TestLogic testLogic,
             IAircraftDataUpdater aircraftDataUpdater,
             IFlightPlanUpdater flightPlanUpdater,
             IFlightStatusUpdater flightStatusUpdater)
@@ -26,6 +28,7 @@ namespace FlightTracker.Clients.WpfApp
             this.viewModel = viewModel;
             this.signalR = signalR;
             this.flightLogic = flightLogic;
+            this.testLogic = testLogic;
             this.flightStatusUpdater = flightStatusUpdater;
             DataContext = viewModel;
 
@@ -106,6 +109,11 @@ namespace FlightTracker.Clients.WpfApp
             {
                 watcher.Dispose();
             }
+        }
+
+        private async void ButtonTestStorage_Click(object sender, RoutedEventArgs e)
+        {
+            await testLogic.TestImageUploader();
         }
     }
 }
