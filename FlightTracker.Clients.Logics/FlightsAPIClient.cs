@@ -1,6 +1,7 @@
 ﻿using FlightTracker.DTOs;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -39,6 +40,14 @@ namespace FlightTracker.Clients.Logics
 
             var result = JsonConvert.DeserializeObject<FlightData>(responseString);
             return result;
+        }
+
+        public async Task PostRouteAsync(string id, List<FlightStatus> route)
+        {
+            var dataString = JsonConvert.SerializeObject(route);
+            var response = await httpClient.PostAsync(baseUrl + Endpoint + "/" + id + "/Route", new StringContent(dataString, Encoding.UTF8, "application/json"));
+            var responseString = await response.Content.ReadAsStringAsync();
+            response.EnsureSuccessStatusCode();
         }
     }
 }

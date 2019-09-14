@@ -2,7 +2,6 @@
 using FlightTracker.Web.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -24,11 +23,6 @@ namespace FlightTracker.Web.Controllers
         public async Task<IEnumerable<FlightData>> Get(int? limit = null)
         {
             var data = await flightStorage.GetAllAsync().ConfigureAwait(true);
-            data = JsonConvert.DeserializeObject<List<FlightData>>(JsonConvert.SerializeObject(data));
-            foreach (var flight in data)
-            {
-                flight.Statuses = null;
-            }
 
             if (limit != null && data.Count() > limit.Value)
             {
@@ -66,6 +60,18 @@ namespace FlightTracker.Web.Controllers
         public Task Delete(string id)
         {
             return flightStorage.DeleteAsync(id);
+        }
+
+        [HttpGet("{id}/Route", Name = "Get Route")]
+        public Task<IEnumerable<FlightStatus>> GetRoute(string id)
+        {
+            return flightStorage.GetRouteAsync(id);
+        }
+
+        [HttpPost("{id}/Route", Name = "Post Route")]
+        public Task PostRoute(string id, [FromBody] List<FlightStatus> route)
+        {
+            return flightStorage.UpdateRouteAsync(id, route);
         }
     }
 }

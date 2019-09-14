@@ -1,4 +1,4 @@
-﻿import { Configs, FlightData, AircraftData } from "./Models";
+﻿import { Configs, FlightData, AircraftData, FlightStatus } from "./Models";
 
 type Partial<T> = {
     [P in keyof T]?: T[P];
@@ -10,16 +10,21 @@ export default class ApiService {
         return await response.json() as Configs;
     }
 
-    async getFlight(id: string) {
-        const response = await fetch(`api/Flights/${id}`);
-        return await response.json() as FlightData;
-    }
-
     async getFlights(limit?: number) {
         let url = 'api/Flights';
         if (limit) url += '?limit=' + limit;
         const response = await fetch(url);
         return await response.json() as FlightData[];
+    }
+
+    async getFlight(id: string) {
+        const response = await fetch(`api/Flights/${id}`);
+        return await response.json() as FlightData;
+    }
+
+    async getFlightRoute(id: string) {
+        const response = await fetch(`api/Flights/${id}/Route`);
+        return await response.json() as FlightStatus[];
     }
 
     async patchFlight(id: string, flight: Partial<FlightData>) {

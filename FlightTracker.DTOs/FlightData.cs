@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System;
-using System.Collections.Generic;
 
 namespace FlightTracker.DTOs
 {
@@ -39,7 +38,6 @@ namespace FlightTracker.DTOs
         public FlightState State { get; set; } = FlightState.Started;
 
         public FlightPlan FlightPlan { get; set; }
-        public List<FlightStatus> Statuses { get; set; } = new List<FlightStatus>();
     }
 
     public enum FlightState

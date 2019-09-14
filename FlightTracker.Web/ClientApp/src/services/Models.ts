@@ -31,8 +31,6 @@ export interface FlightData {
     statusTakeOff?: FlightStatus;
     statusLanding?: FlightStatus;
 
-    statuses?: FlightStatus[];
-
     fuelUsed: number;
     distanceFlown: number;
 

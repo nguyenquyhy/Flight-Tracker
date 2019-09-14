@@ -119,13 +119,15 @@ class Flight extends Component<Props, State> {
         const data = await this.context.api.getFlight(this.props.match.params.id);
         this.setState({ flight: data, loading: false });
 
-        if (data.statuses && data.statuses.length > 0) {
+        const statuses = await this.context.api.getFlightRoute(data.id);
+
+        if (statuses && statuses.length > 0) {
             let mapElement = document.getElementById('map') as HTMLDivElement;
 
-            let north = data.statuses.reduce((prev, curr) => Math.max(prev, curr.latitude), -1000);
-            let south = data.statuses.reduce((prev, curr) => Math.min(prev, curr.latitude), 1000);
-            let east = data.statuses.reduce((prev, curr) => Math.max(prev, curr.longitude), -1000);
-            let west = data.statuses.reduce((prev, curr) => Math.min(prev, curr.longitude), 1000);
+            let north = statuses.reduce((prev, curr) => Math.max(prev, curr.latitude), -1000);
+            let south = statuses.reduce((prev, curr) => Math.min(prev, curr.latitude), 1000);
+            let east = statuses.reduce((prev, curr) => Math.max(prev, curr.longitude), -1000);
+            let west = statuses.reduce((prev, curr) => Math.min(prev, curr.longitude), 1000);
 
             let extra = 2;
             let map = new google.maps.Map(mapElement, {
@@ -158,9 +160,9 @@ class Flight extends Component<Props, State> {
             let arr: FlightStatus[] = [];
             let path: google.maps.Polyline | null = null;
 
-            let allScreenshots = data.statuses.filter(o => o.screenshotUrl).map(o => o.screenshotUrl);
+            let allScreenshots = statuses.filter(o => o.screenshotUrl).map(o => o.screenshotUrl);
 
-            for (let status of data.statuses) {
+            for (let status of statuses) {
                 if (path === null
                     || (arr.length > 0 && statusToColor(arr[arr.length - 1]) !== statusToColor(status))
                 ) {
@@ -234,7 +236,7 @@ class Flight extends Component<Props, State> {
             }
 
             if (data.state === 'Crashed') {
-                let status = data.statuses[data.statuses.length - 1];
+                let status = statuses[statuses.length - 1];
                 new google.maps.Marker({
                     position: { lat: status.latitude, lng: status.longitude },
                     icon: {
