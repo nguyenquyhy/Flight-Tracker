@@ -4,7 +4,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
-using Serilog.Core;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -15,8 +14,6 @@ namespace FlightTracker.Clients.WpfApp
 {
     public partial class App : Application
     {
-        private Logger logger;
-
         public ServiceProvider ServiceProvider { get; private set; }
         public IConfigurationRoot Configuration { get; private set; }
 
@@ -40,7 +37,8 @@ namespace FlightTracker.Clients.WpfApp
 
         private void ConfigureServices(ServiceCollection services)
         {
-            logger = new LoggerConfiguration().WriteTo.File("flighttracker.log").CreateLogger();
+            Log.Logger = new LoggerConfiguration().WriteTo.File("flighttracker.log").CreateLogger();
+
 
             services.AddOptions();
             services.Configure<AppSettings>((appSettings) =>
@@ -53,6 +51,7 @@ namespace FlightTracker.Clients.WpfApp
                     .AddDebug()
                     .AddSerilog();
             });
+
             services.AddSingleton<FlightInfoViewModel>();
             services.AddSingleton<SignalRLogic>();
             services.AddSingleton<SimConnectLogic>();
