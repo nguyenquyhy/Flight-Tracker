@@ -129,7 +129,14 @@
             <TabItem Header="Test">
                 <StackPanel Margin="10">
                     <Button Content="Test Storage Connection" Click="ButtonTestStorage_Click" />
+                    <Button Content="Dump Flight" Click="ButtonDumpFlight_Click" />
                 </StackPanel>
+            </TabItem>
+
+            <TabItem Header="Log">
+                <Grid>
+                    <TextBox x:Name="TextLog" TextWrapping="Wrap" IsReadOnly="True" VerticalScrollBarVisibility="Auto" />
+                </Grid>
             </TabItem>
         </TabControl>
 

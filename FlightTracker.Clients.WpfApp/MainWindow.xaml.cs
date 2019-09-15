@@ -1,5 +1,6 @@
 ﻿using FlightTracker.Clients.Logics;
 using System;
+using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
@@ -41,6 +42,29 @@ namespace FlightTracker.Clients.WpfApp
             watcher = new FileSystemWatcher(folder);
             watcher.Created += Watcher_Created;
             watcher.EnableRaisingEvents = true;
+        }
+
+        public void DisplayLog(LogWrapper log)
+        {
+            try
+            {
+                var content = $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)}] [{log.LogLevel.ToString()}] {log.FormattedString}";
+                var ex = log.Exception;
+                while (ex != null)
+                {
+                    content += $"\n Error: [{ex.GetType().FullName}] {ex.Message}\n Stack Trace: {ex.StackTrace}";
+                    if (ex.InnerException != null)
+                    {
+                        content += "\n ==== INNER EXCEPTION ====";
+                    }
+                    ex = ex.InnerException;
+                }
+                TextLog.AppendText(content + "\n");
+            }
+            catch
+            {
+
+            }
         }
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
@@ -114,6 +138,11 @@ namespace FlightTracker.Clients.WpfApp
         private async void ButtonTestStorage_Click(object sender, RoutedEventArgs e)
         {
             await testLogic.TestImageUploader();
+        }
+
+        private async void ButtonDumpFlight_Click(object sender, RoutedEventArgs e)
+        {
+            await flightLogic.DumpAsync();
         }
     }
 }

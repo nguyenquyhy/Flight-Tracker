@@ -621,7 +621,7 @@ namespace FlightTracker.Clients.Logics
 
         void simconnect_OnRecvException(SimConnect sender, SIMCONNECT_RECV_EXCEPTION data)
         {
-            logger.LogError("Exception received", data.dwException);
+            logger.LogError("Exception received: {0}", data.dwException);
         }
 
         private void simconnect_OnRecvAirportList(SimConnect sender, SIMCONNECT_RECV_AIRPORT_LIST data)

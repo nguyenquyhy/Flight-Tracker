@@ -15,6 +15,9 @@ namespace FlightTracker.Clients.WpfApp
     public partial class App : Application
     {
         public ServiceProvider ServiceProvider { get; private set; }
+
+        private MainWindow mainWindow = null;
+
         public IConfigurationRoot Configuration { get; private set; }
 
         protected override void OnStartup(StartupEventArgs e)
@@ -30,7 +33,7 @@ namespace FlightTracker.Clients.WpfApp
 
             ServiceProvider = serviceCollection.BuildServiceProvider();
 
-            var mainWindow = ServiceProvider.GetRequiredService<MainWindow>();
+            mainWindow = ServiceProvider.GetRequiredService<MainWindow>();
             mainWindow.Loaded += MainWindow_Loaded;
             mainWindow.Show();
         }
@@ -38,7 +41,6 @@ namespace FlightTracker.Clients.WpfApp
         private void ConfigureServices(ServiceCollection services)
         {
             Log.Logger = new LoggerConfiguration().WriteTo.File("flighttracker.log").CreateLogger();
-
 
             services.AddOptions();
             services.Configure<AppSettings>((appSettings) =>
@@ -49,7 +51,17 @@ namespace FlightTracker.Clients.WpfApp
             {
                 configure
                     .AddDebug()
-                    .AddSerilog();
+                    .AddSerilog()
+                    .AddProvider(new CustomLoggerProvider(LogLevel.Information, log =>
+                    {
+                        Dispatcher.Invoke(() =>
+                        {
+                            if (mainWindow != null && mainWindow.IsLoaded)
+                            {
+                                mainWindow.DisplayLog(log);
+                            }
+                        });
+                    }));
             });
 
             services.AddSingleton<FlightInfoViewModel>();

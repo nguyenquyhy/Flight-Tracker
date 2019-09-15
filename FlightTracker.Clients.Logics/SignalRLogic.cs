@@ -39,7 +39,7 @@ namespace FlightTracker.Clients.Logics
             }
             catch (Exception ex)
             {
-                logger.LogError("Cannot send to SignalR!", ex);
+                logger.LogError(ex, "Cannot send to SignalR!");
             }
         }
 
@@ -52,7 +52,7 @@ namespace FlightTracker.Clients.Logics
             }
             catch (Exception ex)
             {
-                logger.LogError("Cannot send to SignalR!", ex);
+                logger.LogError(ex, "Cannot send to SignalR!");
             }
         }
 
@@ -83,7 +83,7 @@ namespace FlightTracker.Clients.Logics
             }
             catch (Exception ex)
             {
-                logger.LogError("Cannot send to SignalR!", ex);
+                logger.LogError(ex, "Cannot send to SignalR!");
             }
         }
 

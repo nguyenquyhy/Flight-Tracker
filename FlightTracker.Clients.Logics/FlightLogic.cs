@@ -1,7 +1,10 @@
 ﻿using FlightTracker.DTOs;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -26,7 +29,7 @@ namespace FlightTracker.Clients.Logics
         int zuluTime = 0;
         long absoluteTime = 0;
 
-        DateTime? lastSave = null;
+        DateTime? lastSaveAttempt = null;
 
         public FlightLogic(ILogger<FlightLogic> logger,
             FlightsAPIClient flightsAPIClient,
@@ -48,6 +51,15 @@ namespace FlightTracker.Clients.Logics
             flightStatusUpdater.FlightStatusUpdated += FlightStatusUpdater_FlightStatusUpdated;
             flightStatusUpdater.Crashed += FlightStatusUpdater_CrashedAsync;
             flightStatusUpdater.CrashReset += FlightStatusUpdater_CrashReset;
+        }
+
+        public async Task DumpAsync()
+        {
+            var now = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss", CultureInfo.InvariantCulture);
+            var dataFile = Path.Combine(Directory.GetCurrentDirectory(), "flightdata-" + now + ".json");
+            var routeFile = Path.Combine(Directory.GetCurrentDirectory(), "flightroute-" + now + ".json");
+            await File.WriteAllTextAsync(dataFile, JsonConvert.SerializeObject(flightData));
+            await File.WriteAllTextAsync(routeFile, JsonConvert.SerializeObject(flightRoute));
         }
 
         public async Task SaveAsync()
@@ -75,7 +87,7 @@ namespace FlightTracker.Clients.Logics
                 await Task.Delay(5000);
             }
 
-            lastSave = null;
+            lastSaveAttempt = null;
             flightData = new FlightData
             {
                 Title = title,
@@ -90,11 +102,18 @@ namespace FlightTracker.Clients.Logics
 
         public async Task ScreenshotAsync(string name, byte[] image)
         {
-            var lastStatus = flightRoute.LastOrDefault();
-            if (lastStatus != null)
+            try
             {
-                var url = await imageUploader.UploadAsync(name, image);
-                lastStatus.ScreenshotUrl = url;
+                var lastStatus = flightRoute.LastOrDefault();
+                if (lastStatus != null)
+                {
+                    var url = await imageUploader.UploadAsync(name, image);
+                    lastStatus.ScreenshotUrl = url;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Cannot upload screenshot {0}", name);
             }
         }
 
@@ -136,7 +155,7 @@ namespace FlightTracker.Clients.Logics
         {
             var lastStatus = flightRoute.LastOrDefault();
 
-            if (lastStatus != null && lastStatus.IsOnGround && !e.FlightStatus.IsOnGround && flightData.StatusTakeOff == null)
+            if (lastStatus != null && lastStatus.IsOnGround && !e.FlightStatus.IsOnGround && flightData.State == FlightState.Started)
             {
                 // Took off
                 logger.LogInformation("Aircraft has taken off");
@@ -175,6 +194,12 @@ namespace FlightTracker.Clients.Logics
             }
             else
             {
+                if (!e.FlightStatus.IsOnGround && flightData.State == FlightState.Started && e.FlightStatus.GroundSpeed > 5)
+                {
+                    // Flight start when the airplane is already flying
+                    flightData.State = FlightState.Enroute;
+                }
+
                 // Try to reduce the number of status
                 if (lastStatus == null && e.FlightStatus.IsOnGround && e.FlightStatus.GroundSpeed < 1f)
                     return;
@@ -196,7 +221,7 @@ namespace FlightTracker.Clients.Logics
             flightRoute.Add(e.FlightStatus);
 
             if ((flightData.State == FlightState.Enroute || flightData.State == FlightState.Arrived)
-                && lastSave.HasValue && DateTime.Now - lastSave.Value > TimeSpan.FromMilliseconds(SaveDelay))
+                && (!lastSaveAttempt.HasValue || DateTime.Now - lastSaveAttempt.Value > TimeSpan.FromMilliseconds(SaveDelay)))
             {
                 await AddOrUpdateFlightAsync();
             }
@@ -219,10 +244,21 @@ namespace FlightTracker.Clients.Logics
             }
         }
 
-        private async Task AddOrUpdateFlightAsync()
+        private bool isSaving = false;
+
+        private async Task<bool> AddOrUpdateFlightAsync()
         {
+            if (isSaving)
+            {
+                logger.LogInformation("Last save is still running. Skip this save!");
+                return false;
+            }
+
+            lastSaveAttempt = DateTime.Now;
+
             try
             {
+                isSaving = true;
                 if (flightData.Id == null)
                 {
                     var newData = await flightsAPIClient.PostAsync(flightData);
@@ -250,16 +286,20 @@ namespace FlightTracker.Clients.Logics
             }
             catch (HttpRequestException ex)
             {
-                logger.LogError($"Cannot add/update flight! Error: {ex.GetType().FullName} {ex.Message}", ex);
+                logger.LogError(ex, $"Cannot add/update flight! Error: {ex.GetType().FullName} {ex.Message}");
+                return false;
             }
             catch (TaskCanceledException ex)
             {
-                logger.LogError($"Cannot add/update flight! Error: {ex.GetType().FullName} {ex.Message}", ex);
+                logger.LogError(ex, $"Cannot add/update flight! Error: {ex.GetType().FullName} {ex.Message}");
+                return false;
             }
             finally
             {
-                lastSave = DateTime.Now;
+                isSaving = false;
             }
+
+            return true;
         }
 
         private string GetNearestAirport(FlightStatusUpdatedEventArgs e)
