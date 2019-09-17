@@ -1,4 +1,6 @@
-﻿namespace FlightTracker.DTOs
+﻿using System.Collections.Generic;
+
+namespace FlightTracker.DTOs
 {
     public class AircraftData
     {
@@ -8,5 +10,7 @@
         public string TailNumber { get; set; }
         public string Airline { get; set; }
         public string FlightNumber { get; set; }
+
+        public List<string> PictureUrls { get; set; }
     }
 }

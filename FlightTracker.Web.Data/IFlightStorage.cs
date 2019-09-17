@@ -13,6 +13,9 @@ namespace FlightTracker.Web.Data
         Task<FlightData> PatchAsync(string id, FlightData data);
         Task<bool> DeleteAsync(string id);
 
+        IAsyncEnumerable<AircraftData> GetAllAircraftsAsync();
+        Task<AircraftData> GetAircraftAsync(string tailNumber);
+
         Task<IEnumerable<FlightStatus>> GetRouteAsync(string id);
         Task<IEnumerable<FlightStatus>> UpdateRouteAsync(string id, List<FlightStatus> route);
     }

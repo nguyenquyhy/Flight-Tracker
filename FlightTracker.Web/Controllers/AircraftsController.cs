@@ -1,8 +1,8 @@
 ﻿using FlightTracker.DTOs;
 using FlightTracker.Web.Data;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace FlightTracker.Web.Controllers
@@ -19,14 +19,19 @@ namespace FlightTracker.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IEnumerable<AircraftData>> Get()
+        public async IAsyncEnumerable<AircraftData> Get()
         {
-            var flights = await flightStorage.GetAllAsync();
-            var aircrafts = flights.Where(o => o.Aircraft != null).Select(o => o.Aircraft).ToList();
+            await foreach (var aircraft in flightStorage.GetAllAircraftsAsync())
+            {
+                yield return aircraft;
+            }
+        }
 
-            var tailNumbers = aircrafts.Select(o => o.TailNumber).Distinct();
-
-            return tailNumbers.Select(o => aircrafts.First(a => a.TailNumber == o));
+        [HttpGet]
+        [Route("{tailNumber}")]
+        public async Task<AircraftData> Get(string tailNumber)
+        {
+            return await flightStorage.GetAircraftAsync(tailNumber).ConfigureAwait(true);
         }
     }
 }

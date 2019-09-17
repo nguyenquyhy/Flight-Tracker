@@ -51,6 +51,8 @@ export interface AircraftData {
     tailNumber: string;
     airline: string;
     flightNumber: string;
+
+    pictureUrls: string[];
 }
 
 export interface FlightPlan {

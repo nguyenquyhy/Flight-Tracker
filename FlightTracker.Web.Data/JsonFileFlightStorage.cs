@@ -16,7 +16,7 @@ namespace FlightTracker.Web.Data
 
         public JsonFileFlightStorage(string filePath) : base(filePath)
         {
-            
+
         }
 
         public async Task<IEnumerable<FlightData>> GetAllAsync()
@@ -150,6 +150,30 @@ namespace FlightTracker.Web.Data
                 flightsSm.Release();
             }
         }
+
+        public async IAsyncEnumerable<AircraftData> GetAllAircraftsAsync()
+        {
+            var flights = await LoadAsync().ConfigureAwait(false);
+            flights = flights.Where(o => o.Aircraft != null).ToList();
+
+            var groups = flights.GroupBy(o => o.Aircraft.TailNumber);
+
+            foreach (var group in groups)
+            {
+                var aircraft = group.First().Aircraft;
+                aircraft.PictureUrls = group.Where(o => o.Statuses != null).SelectMany(o => o.Statuses.Where(s => !string.IsNullOrEmpty(s.ScreenshotUrl))).Select(o => o.ScreenshotUrl).TakeLast(5).ToList();
+                yield return aircraft;
+            }
+        }
+
+        public async Task<AircraftData> GetAircraftAsync(string tailNumber)
+        {
+            var flights = await LoadAsync().ConfigureAwait(false);
+            flights = flights.Where(o => tailNumber.Equals(o.Aircraft?.TailNumber, StringComparison.InvariantCultureIgnoreCase)).ToList();
+            var aircraft = flights.First().Aircraft;
+            aircraft.PictureUrls = flights.Where(o => o.Statuses != null).SelectMany(o => o.Statuses.Where(s => !string.IsNullOrEmpty(s.ScreenshotUrl))).Select(o => o.ScreenshotUrl).ToList();
+            return aircraft;
+        }
     }
 
     public abstract class JsonFileFlightStorageBase
@@ -186,7 +210,7 @@ namespace FlightTracker.Web.Data
                     sm.Release();
                 }
             }
-            return data;
+            return data.Select(o => o.Clone()).ToList();
         }
 
         protected async Task SaveAsync(List<FlightWrapper> data)
@@ -317,6 +341,11 @@ namespace FlightTracker.Web.Data
             StatusLanding = data.StatusLanding;
 
             State = data.State;
+        }
+
+        public FlightWrapper Clone()
+        {
+            return JsonConvert.DeserializeObject<FlightWrapper>(JsonConvert.SerializeObject(this));
         }
     }
 }
