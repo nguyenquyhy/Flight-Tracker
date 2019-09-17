@@ -68,6 +68,9 @@ class Flight extends Component<Props, State> {
 
                 const canEdit = context.configs ? context.configs.permissions["Flight"].edit : false;
                 const canDelete = context.configs ? context.configs.permissions["Flight"].delete : false;
+                const startDateTime = new Date(flight.startDateTime);
+                const duration = flight.state === 'Enroute' ?
+                    `(${Flight.formatDuration((new Date().getTime() - startDateTime.getTime()) / 1000)})` : '';
 
                 return <>
                     <div style={{ float: 'right' }}>
@@ -84,11 +87,11 @@ class Flight extends Component<Props, State> {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr><td>From</td><td>{flight.airportFrom}</td></tr>
-                            <tr><td>To</td><td>{flight.airportTo}</td></tr>
+                            <tr><td>Airports</td><td>{flight.airportFrom || '?'} - {flight.airportTo || '?'}</td></tr>
                             {flight.aircraft && <tr><td>Aircraft</td><td>{flight.aircraft.title}</td></tr>}
                             <tr><td>Flight Number</td><td>{flight.airline} {flight.flightNumber}</td></tr>
                             <tr><td>State</td><td>{flight.state}</td></tr>
+                            <tr><td>Local Time</td><td>{startDateTime.toLocaleDateString()} {startDateTime.toLocaleTimeString()} {duration}</td></tr>
                             {flight.statusTakeOff && flight.statusLanding ?
                                 <>
                                     <tr><td>Take-off/Landing Time</td><td>{Flight.secondToTime(flight.takeOffLocalTime)} - {Flight.secondToTime(flight.takeOffLocalTime + flight.statusLanding.simTime - flight.statusTakeOff.simTime)}</td></tr>
@@ -261,7 +264,7 @@ class Flight extends Component<Props, State> {
         let hours = Math.floor(mins / 60);
         mins -= hours * 60;
 
-        if (hours === 0 && mins < 10) {
+        if (hours === 0) {
             return mins + "m " + seconds + "s";
         } else {
             return hours + "h " + mins + "m";
