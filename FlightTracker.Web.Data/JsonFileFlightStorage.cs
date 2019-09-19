@@ -61,8 +61,20 @@ namespace FlightTracker.Web.Data
                 await flightsSm.WaitAsync().ConfigureAwait(false);
 
                 var flights = await LoadAsync().ConfigureAwait(false);
-                var flight = flights.First(o => o.Id == id);
-                flight.Update(data);
+                var flight = flights.FirstOrDefault(o => o.Id == id);
+                if (flight != null)
+                {
+                    flight.Update(data);
+                }
+                else
+                {
+                    flight = new FlightWrapper(data)
+                    {
+                        Id = id,
+                        AddedDateTime = DateTimeOffset.UtcNow
+                    };
+                    flights.Add(flight);
+                }
                 await SaveAsync(flights).ConfigureAwait(false);
 
                 return flight.ToDTO();
@@ -225,6 +237,8 @@ namespace FlightTracker.Web.Data
                 {
                     NullValueHandling = NullValueHandling.Ignore
                 })).ConfigureAwait(false);
+
+                this.data = data;
             }
             finally
             {
