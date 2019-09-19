@@ -2,6 +2,7 @@
 import { RouteComponentProps } from "react-router";
 import SimpleLightBox from "simple-lightbox";
 import "simple-lightbox/dist/simpleLightbox.css";
+import Slider from 'react-slick';
 import GooglePageWrapper from "./hoc/GooglePageWrapper";
 import { FlightData, FlightStatus } from "../services/Models";
 import { ServicesContext, ConfigsContext } from "../Context";
@@ -10,6 +11,7 @@ interface State {
     loading: boolean;
     deleting: boolean;
     flight: FlightData | null;
+    statuses: FlightStatus[] | null;
 }
 
 interface RouteProps {
@@ -26,7 +28,7 @@ class Flight extends Component<Props, State> {
 
     constructor(props) {
         super(props);
-        this.state = { flight: null, loading: true, deleting: false };
+        this.state = { flight: null, statuses: null, loading: true, deleting: false };
     }
 
     componentDidMount() {
@@ -60,6 +62,36 @@ class Flight extends Component<Props, State> {
 
     public render() {
         if (this.state.loading) return <p><em>Loading...</em></p>;
+
+        const pictureUrls = this.state.statuses ? this.state.statuses.filter(o => !!o.screenshotUrl).map(o => o.screenshotUrl || '') : [];
+
+        const sliderProperties = {
+            slidesToShow: 4,
+            slidesToScroll: 1,
+            arrows: true,
+            dots: true,
+            initialSlide: 0,
+            responsive: [
+                {
+                    breakpoint: 1904,
+                    settings: {
+                        slidesToShow: 3
+                    }
+                },
+                {
+                    breakpoint: 1280,
+                    settings: {
+                        slidesToShow: 2
+                    }
+                },
+                {
+                    breakpoint: 612,
+                    settings: {
+                        slidesToShow: 1
+                    }
+                }
+            ]
+        }
 
         return <ConfigsContext.Consumer>
             {context => {
@@ -98,7 +130,7 @@ class Flight extends Component<Props, State> {
                                     <tr><td>Full Duration</td><td>{Flight.formatDuration(flight.statusLanding.simTime - flight.statusTakeOff.simTime)}</td></tr>
                                     <tr><td>Fuel Used</td><td>{Math.round((flight.statusTakeOff.fuelTotalQuantity - flight.statusLanding.fuelTotalQuantity) * 10) / 10} lb</td></tr>
                                 </> :
-                                <>
+                                flight.statusTakeOff && <>
                                     <tr><td>Take-off Time</td><td>{Flight.secondToTime(flight.takeOffLocalTime)}</td></tr>
                                 </>
                             }
@@ -113,6 +145,19 @@ class Flight extends Component<Props, State> {
                     </table>
                     <p><em>*Blue: on the ground. Purple: autopilot off. Green: autopilot on</em></p>
                     <div id="map" style={{ width: '100%', height: 800 }}></div>
+
+                    <div style={{ overflowX: 'hidden', overflowY: 'visible', height: 360, marginTop: 10 }}>
+                        <Slider {...sliderProperties}>
+                            {pictureUrls && pictureUrls.map(pictureUrl => (
+                                <div key={pictureUrl}>
+                                    <img src={pictureUrl} height="320" onClick={() => SimpleLightBox.open({
+                                        items: pictureUrls,
+                                        startAt: pictureUrls.findIndex(u => u === pictureUrl)
+                                    })} />
+                                </div>
+                            ))}
+                        </Slider>
+                    </div>
                 </>
             }}
         </ConfigsContext.Consumer>
@@ -123,6 +168,7 @@ class Flight extends Component<Props, State> {
         this.setState({ flight: data, loading: false });
 
         const statuses = await this.context.api.getFlightRoute(data.id);
+        this.setState({ statuses: statuses });
 
         if (statuses && statuses.length > 0) {
             let mapElement = document.getElementById('map') as HTMLDivElement;
