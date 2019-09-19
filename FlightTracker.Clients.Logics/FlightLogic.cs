@@ -66,8 +66,8 @@ namespace FlightTracker.Clients.Logics
         {
             if (flightData != null)
             {
-                logger.LogDebug("Saving flight");
-                await AddOrUpdateFlightAsync();
+                logger.LogInformation("Saving flight manually");
+                await AddOrUpdateFlightAsync(true);
             }
         }
 
@@ -244,21 +244,20 @@ namespace FlightTracker.Clients.Logics
             }
         }
 
-        private bool isSaving = false;
+        public bool IsSaving { get; private set; }
 
-        private async Task<bool> AddOrUpdateFlightAsync()
+        private async Task<bool> AddOrUpdateFlightAsync(bool force = false)
         {
-            if (isSaving)
+            if (!force && IsSaving)
             {
                 logger.LogInformation("Last save is still running. Skip this save!");
                 return false;
             }
 
-            lastSaveAttempt = DateTime.Now;
-
             try
             {
-                isSaving = true;
+                IsSaving = true;
+                lastSaveAttempt = DateTime.Now;
                 if (flightData.Id == null)
                 {
                     var newData = await flightsAPIClient.PostAsync(flightData);
@@ -296,7 +295,7 @@ namespace FlightTracker.Clients.Logics
             }
             finally
             {
-                isSaving = false;
+                IsSaving = false;
             }
 
             return true;
