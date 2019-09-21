@@ -16,6 +16,8 @@ namespace FlightTracker.Web.Data
         IAsyncEnumerable<AircraftData> GetAllAircraftsAsync();
         Task<AircraftData> GetAircraftAsync(string tailNumber);
 
+        Task<List<string>> GetAircraftPictureUrlsAsync(string tailNumber);
+
         Task<IEnumerable<FlightStatus>> GetRouteAsync(string id);
         Task<IEnumerable<FlightStatus>> UpdateRouteAsync(string id, List<FlightStatus> route);
     }

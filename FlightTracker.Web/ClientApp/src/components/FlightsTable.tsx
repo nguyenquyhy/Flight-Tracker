@@ -39,9 +39,9 @@ export default class FlightsTable extends Component<Props> {
 
 
     static stateToRowClassName(state: string) {
-        switch (state) {
-            case 'Crashed': return 'table-danger';
-            case 'Enroute': return 'table-primary';
+        switch (state.toLowerCase()) {
+            case 'crashed': return 'table-danger';
+            case 'enroute': return 'table-primary';
         }
         return '';
     }

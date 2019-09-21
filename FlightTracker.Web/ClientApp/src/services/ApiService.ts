@@ -11,20 +11,83 @@ export default class ApiService {
     }
 
     async getFlights(limit?: number) {
-        let url = 'api/Flights';
-        if (limit) url += '?limit=' + limit;
-        const response = await fetch(url);
-        return await response.json() as FlightData[];
+        const query = `query ($last: Int) {
+    flights(last: $last) {
+        id
+        startDateTime
+        title
+        airportFrom
+        airportTo
+        aircraft {
+            title
+        }
+        state
+    }
+}`
+
+        var data = await this.graphQLquery(
+            query,
+            { last: limit }
+        );
+        return data.flights as FlightData[];
     }
 
     async getFlight(id: string) {
-        const response = await fetch(`api/Flights/${id}`);
-        return await response.json() as FlightData;
+        const query = `query ($id: String) {
+    flight(id: $id) {
+        id
+        title
+        description
+        startDateTime
+        endDateTime
+        flightNumber
+        airportFrom
+        airportTo
+        aircraft {
+            title
+        }
+        takeOffLocalTime
+        statusTakeOff {
+            simTime
+            fuelTotalQuantity
+            indicatedAirSpeed
+        }
+        statusLanding {
+            simTime
+            fuelTotalQuantity
+            indicatedAirSpeed
+            verticalSpeed
+        }
+        state
+    }
+}`
+
+        var data = await this.graphQLquery(
+            query,
+            { id: id }
+        );
+        return data.flight as FlightData;
     }
 
     async getFlightRoute(id: string) {
-        const response = await fetch(`api/Flights/${id}/Route`);
-        return await response.json() as FlightStatus[];
+        const query = `query ($id: String) {
+    flight(id: $id) {
+        route {
+            simTime
+            latitude
+            longitude
+            screenshotUrl
+            isOnGround
+            isAutopilotOn
+        }
+    }
+}`
+
+        var data = await this.graphQLquery(
+            query,
+            { id: id }
+        );
+        return data.flight.route as FlightStatus[];
     }
 
     async patchFlight(id: string, flight: Partial<FlightData>) {
@@ -49,9 +112,32 @@ export default class ApiService {
     }
 
     async getAircrafts() {
-        let url = 'api/Aircrafts';
-        const response = await fetch(url);
-        return await response.json() as AircraftData[];
-        
+        const query = `{
+    aircrafts {
+        tailNumber
+        title
+        model
+        type
+        pictureUrls(limit: 5)
+    }
+}`
+
+        var data = await this.graphQLquery(query);
+        return data.aircrafts as AircraftData[];
+    }
+
+    private async graphQLquery(query: string, variables?: any) {
+        var response = await fetch('graphql', {
+            method: 'post',
+            body: JSON.stringify({
+                query: query,
+                variables: variables
+            }),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        var data = await response.json();
+        return data.data;
     }
 }

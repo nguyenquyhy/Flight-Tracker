@@ -1,8 +1,14 @@
 using FlightTracker.Web.Data;
 using FlightTracker.Web.Hubs;
+using GraphQL;
+using GraphQL.Server;
+using GraphQL.Server.Ui.GraphiQL;
+using GraphQL.Server.Ui.Playground;
+using GraphQL.Server.Ui.Voyager;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,16 +32,29 @@ namespace FlightTracker.Web
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // Temporary workaround for GraphQL
+            services.Configure<KestrelServerOptions>(options => { options.AllowSynchronousIO = true; });
+            services.Configure<IISServerOptions>(options => { options.AllowSynchronousIO = true; });
+
             services.Configure<AppSettings>(appSettings => Configuration.GetSection("AppSettings").Bind(appSettings));
 
             services.AddSingleton<IFlightStorage>(new JsonFileFlightStorage(Path.Combine(Directory.GetCurrentDirectory(), "flights.json")));
+
+            services
+                .AddGraphQL()
+                .AddGraphTypes(typeof(RootSchema).Assembly)
+                .AddDataLoader()
+                .AddWebSockets();
+
+            services
+                .AddSingleton(s => new RootSchema(new FuncServiceProvider(t => s.GetRequiredService(t))));
 
             services.AddControllersWithViews().AddJsonOptions(configuration =>
             {
                 configuration.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                 configuration.JsonSerializerOptions.IgnoreNullValues = true;
             });
-
+            
             services.AddSignalR();
 
             // In production, the React files will be served from this directory
@@ -115,6 +134,14 @@ namespace FlightTracker.Web
 
             app.UseAuthentication();
             app.UseAuthorization();
+
+            app.UseGraphQL<RootSchema>("/graphql");
+            // use graphiQL middleware at default url /graphiql
+            app.UseGraphiQLServer(new GraphiQLOptions());
+            // use graphql-playground middleware at default url /ui/playground
+            app.UseGraphQLPlayground(new GraphQLPlaygroundOptions());
+            // use voyager middleware at default url /ui/voyager
+            app.UseGraphQLVoyager(new GraphQLVoyagerOptions());
 
             app.UseEndpoints(endpoints =>
             {

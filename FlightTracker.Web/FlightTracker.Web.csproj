@@ -11,6 +11,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="GraphQL.Server.Transports.AspNetCore" Version="3.5.0-alpha0027" />
+    <PackageReference Include="GraphQL.Server.Transports.WebSockets" Version="3.5.0-alpha0027" />
+    <PackageReference Include="GraphQL.Server.Ui.GraphiQL" Version="3.5.0-alpha0027" />
+    <PackageReference Include="GraphQL.Server.Ui.Playground" Version="3.5.0-alpha0027" />
+    <PackageReference Include="GraphQL.Server.Ui.Voyager" Version="3.5.0-alpha0027" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="3.0.0-rc1.19457.4" />
     <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="3.0.0-rc1.19457.4" />
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.4">
@@ -48,6 +53,7 @@
   <ItemGroup>
     <ProjectReference Include="..\FlightTracker.DTOs\FlightTracker.DTOs.csproj" />
     <ProjectReference Include="..\FlightTracker.Web.Data\FlightTracker.Web.Data.csproj" />
+    <ProjectReference Include="..\FlightTracker.Web.GraphQL\FlightTracker.Web.GraphQL.csproj" />
   </ItemGroup>
 
   <Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">

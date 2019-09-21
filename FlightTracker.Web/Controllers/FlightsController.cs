@@ -19,24 +19,6 @@ namespace FlightTracker.Web.Controllers
             this.flightStorage = flightStorage;
         }
 
-        [HttpGet]
-        public async Task<IEnumerable<FlightData>> Get(int? limit = null)
-        {
-            var data = await flightStorage.GetAllAsync().ConfigureAwait(true);
-
-            if (limit != null && data.Count() > limit.Value)
-            {
-                data = data.OrderByDescending(a => a.AddedDateTime).Take(limit.Value);
-            }
-            return data;
-        }
-
-        [HttpGet("{id}", Name = "Get")]
-        public Task<FlightData> Get(string id)
-        {
-            return flightStorage.GetAsync(id);
-        }
-
         [HttpPost]
         public Task<FlightData> Post([FromBody] FlightData flightData)
         {
@@ -60,12 +42,6 @@ namespace FlightTracker.Web.Controllers
         public Task Delete(string id)
         {
             return flightStorage.DeleteAsync(id);
-        }
-
-        [HttpGet("{id}/Route", Name = "Get Route")]
-        public Task<IEnumerable<FlightStatus>> GetRoute(string id)
-        {
-            return flightStorage.GetRouteAsync(id);
         }
 
         [HttpPost("{id}/Route", Name = "Post Route")]

@@ -186,6 +186,16 @@ namespace FlightTracker.Web.Data
             aircraft.PictureUrls = flights.Where(o => o.Statuses != null).SelectMany(o => o.Statuses.Where(s => !string.IsNullOrEmpty(s.ScreenshotUrl))).Select(o => o.ScreenshotUrl).ToList();
             return aircraft;
         }
+
+        public async Task<List<string>> GetAircraftPictureUrlsAsync(string tailNumber)
+        {
+            var flights = await LoadAsync().ConfigureAwait(false);
+            return flights
+                .Where(o => tailNumber.Equals(o.Aircraft?.TailNumber, StringComparison.InvariantCultureIgnoreCase))
+                .Where(o => o.Statuses != null)
+                .SelectMany(o => o.Statuses.Where(s => !string.IsNullOrEmpty(s.ScreenshotUrl)))
+                .Select(o => o.ScreenshotUrl).ToList();
+        }
     }
 
     public abstract class JsonFileFlightStorageBase

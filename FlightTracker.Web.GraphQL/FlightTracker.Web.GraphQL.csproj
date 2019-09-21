@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <RootNamespace>FlightTracker.Web</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GraphQL" Version="3.0.0-preview-1268" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FlightTracker.DTOs\FlightTracker.DTOs.csproj" />
+    <ProjectReference Include="..\FlightTracker.Web.Data\FlightTracker.Web.Data.csproj" />
+  </ItemGroup>
+
+</Project>
