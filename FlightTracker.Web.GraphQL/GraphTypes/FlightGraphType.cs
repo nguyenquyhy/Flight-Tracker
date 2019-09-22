@@ -28,6 +28,9 @@ namespace FlightTracker.Web
             Field(o => o.TakeOffLocalTime);
             Field(o => o.TakeOffZuluTime);
 
+            Field<IntGraphType>("landingLocalTime", resolve: context => context.Source.StatusTakeOff != null && context.Source.StatusLanding != null ? 
+                (int?)(int)(context.Source.TakeOffLocalTime - context.Source.StatusTakeOff.SimTime + context.Source.StatusLanding.SimTime) : null);
+
             Field(o => o.LandingDateTime, nullable: true);
 
             Field(o => o.AirportFrom, nullable: true);

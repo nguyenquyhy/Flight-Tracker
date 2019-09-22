@@ -26,7 +26,9 @@ export interface FlightData {
     takeOffDateTime: string;
     takeOffLocalTime: number;
     takeOffZuluTime: number;
+
     landingDateTime?: string;
+    landingLocalTime?: number;
 
     statusTakeOff?: FlightStatus;
     statusLanding?: FlightStatus;

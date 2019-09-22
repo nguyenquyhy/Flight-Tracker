@@ -195,7 +195,6 @@ class Home extends Component<any, State> {
                     <>
                         <h3>No Live Flight at the moment!</h3>
 
-                        <p>Take a look at some recent flights.</p>
                         <RecentFlights />
                     </>
                 }

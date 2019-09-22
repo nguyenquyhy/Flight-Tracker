@@ -15,6 +15,8 @@ export default class ApiService {
     flights(last: $last) {
         id
         startDateTime
+        takeOffLocalTime
+        landingLocalTime
         title
         airportFrom
         airportTo
@@ -118,7 +120,7 @@ export default class ApiService {
         title
         model
         type
-        pictureUrls(limit: 5)
+        pictureUrls(limit: 7)
     }
 }`
 

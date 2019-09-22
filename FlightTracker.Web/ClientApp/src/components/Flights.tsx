@@ -31,7 +31,7 @@ export class Flights extends Component<any, State> {
 
     renderFlightsTable(flights: FlightData[]) {
         return (
-            <FlightsTable flights={flights} onDeleted={id => this.handleDeleted(id)} />
+            <FlightsTable header='All Flights' flights={flights} onDeleted={id => this.handleDeleted(id)} />
         );
     }
 
@@ -42,7 +42,6 @@ export class Flights extends Component<any, State> {
 
         return (
             <div>
-                <h1>Flights</h1>
                 {contents}
             </div>
         );

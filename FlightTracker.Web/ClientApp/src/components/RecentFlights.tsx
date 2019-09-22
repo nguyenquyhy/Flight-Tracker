@@ -35,7 +35,7 @@ export default class RecentFlight extends Component<any, State> {
     public render() {
         if (!this.state.flights) return null;
         return <>
-            <FlightsTable flights={this.state.flights} onDeleted={id => this.handleDeleted(id)} />
+            <FlightsTable header='Recent Flights' flights={this.state.flights} onDeleted={id => this.handleDeleted(id)} />
             <Link to='/flights'>View more</Link>
         </>
     }
