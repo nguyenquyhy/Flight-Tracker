@@ -8,6 +8,7 @@ namespace FlightTracker.Web
         public RootSchema(IServiceProvider serviceProvider) : base(serviceProvider)
         {
             Query = serviceProvider.GetService(typeof(RootQueryGraphType)) as RootQueryGraphType;
+            Mutation = serviceProvider.GetService(typeof(RootMutationGraphType)) as RootMutationGraphType;
         }
     }
 }

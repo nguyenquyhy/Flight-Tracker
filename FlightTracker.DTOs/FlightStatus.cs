@@ -3,6 +3,9 @@
     public class FlightStatus
     {
         public double SimTime { get; set; }
+        public int? LocalTime { get; set; }
+        public int? ZuluTime { get; set; }
+        public long? AbsoluteTime { get; set; }
 
         public double Latitude { get; set; }
         public double Longitude { get; set; }

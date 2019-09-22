@@ -23,18 +23,14 @@ export interface FlightData {
 
     startDateTime: string;
 
-    takeOffDateTime: string;
-    takeOffLocalTime: number;
-    takeOffZuluTime: number;
-
-    landingDateTime?: string;
-    landingLocalTime?: number;
-
-    statusTakeOff?: FlightStatus;
-    statusLanding?: FlightStatus;
+    statusTakeOff?: FlightStatus | null;
+    statusLanding?: FlightStatus | null;
+    statusCrash?: FlightStatus;
 
     fuelUsed: number;
     distanceFlown: number;
+
+    route?: FlightStatus[];
 
     state: string;
 }
@@ -65,13 +61,13 @@ export interface Waypoint {
     id: string;
     type: string;
     airway: string;
-    lla: string;
     latitude: number;
     longitude: number;
 }
 
 export interface FlightStatus {
     simTime: number;
+    localTime?: number;
 
     latitude: number;
     longitude: number;

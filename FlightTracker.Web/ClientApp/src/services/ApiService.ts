@@ -4,6 +4,33 @@ type Partial<T> = {
     [P in keyof T]?: T[P];
 }
 
+const FlightSchema = `
+id
+title
+description
+startDateTime
+endDateTime
+flightNumber
+airportFrom
+airportTo
+aircraft {
+    title
+}
+statusTakeOff {
+    simTime
+    localTime
+    fuelTotalQuantity
+    indicatedAirSpeed
+}
+statusLanding {
+    simTime
+    localTime
+    fuelTotalQuantity
+    indicatedAirSpeed
+    verticalSpeed
+}
+state`
+
 export default class ApiService {
     async getConfigs() {
         const response = await fetch('api/Configs');
@@ -15,19 +42,26 @@ export default class ApiService {
     flights(last: $last) {
         id
         startDateTime
-        takeOffLocalTime
-        landingLocalTime
         title
         airportFrom
         airportTo
         aircraft {
             title
         }
+        statusTakeOff {
+            localTime
+        }
+        statusLanding {
+            localTime
+        }
+        route(last: 1) {
+            localTime
+        }
         state
     }
 }`
 
-        var data = await this.graphQLquery(
+        const data = await this.graphQLquery(
             query,
             { last: limit }
         );
@@ -35,36 +69,9 @@ export default class ApiService {
     }
 
     async getFlight(id: string) {
-        const query = `query ($id: String) {
-    flight(id: $id) {
-        id
-        title
-        description
-        startDateTime
-        endDateTime
-        flightNumber
-        airportFrom
-        airportTo
-        aircraft {
-            title
-        }
-        takeOffLocalTime
-        statusTakeOff {
-            simTime
-            fuelTotalQuantity
-            indicatedAirSpeed
-        }
-        statusLanding {
-            simTime
-            fuelTotalQuantity
-            indicatedAirSpeed
-            verticalSpeed
-        }
-        state
-    }
-}`
+        const query = `query ($id: String!) { flight(id: $id) { ${FlightSchema} } }`
 
-        var data = await this.graphQLquery(
+        const data = await this.graphQLquery(
             query,
             { id: id }
         );
@@ -72,7 +79,7 @@ export default class ApiService {
     }
 
     async getFlightRoute(id: string) {
-        const query = `query ($id: String) {
+        const query = `query ($id: String!) {
     flight(id: $id) {
         route {
             simTime
@@ -85,7 +92,7 @@ export default class ApiService {
     }
 }`
 
-        var data = await this.graphQLquery(
+        const data = await this.graphQLquery(
             query,
             { id: id }
         );
@@ -93,24 +100,22 @@ export default class ApiService {
     }
 
     async patchFlight(id: string, flight: Partial<FlightData>) {
-        let url = `api/Flights/${id}`;
-        const response = await fetch(url, {
-            method: 'patch',
-            body: JSON.stringify(flight),
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        return await response.json() as FlightData;
+        const query = `mutation ($id: String!, $flight: PatchFlightInput!) { patchFlight(id: $id, flight: $flight) { ${FlightSchema} } }`
+
+        const data = await this.graphQLquery(
+            query,
+            { id: id, flight: flight }
+        );
+        return data.patchFlight as FlightData;
     }
 
     async deleteFlight(id: string) {
-        const response = await fetch(`api/Flights/${id}`, {
-            method: 'delete'
-        });
-        if (!response.ok) {
-            throw new Error();
-        }
+        const query = `mutation($id: String!) { deleteFlight(id: $id) }`
+
+        await this.graphQLquery(
+            query,
+            { id: id }
+        );
     }
 
     async getAircrafts() {
@@ -124,7 +129,7 @@ export default class ApiService {
     }
 }`
 
-        var data = await this.graphQLquery(query);
+        const data = await this.graphQLquery(query);
         return data.aircrafts as AircraftData[];
     }
 

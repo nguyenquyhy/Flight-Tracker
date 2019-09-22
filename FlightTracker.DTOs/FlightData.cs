@@ -4,21 +4,26 @@ using System;
 
 namespace FlightTracker.DTOs
 {
-    public class FlightData
+    public class InputFlightData
     {
-        public string Id { get; set; }
+        public InputFlightData() { }
+
+        public InputFlightData(InputFlightData data)
+        {
+            var properties = this.GetType().GetProperties();
+            foreach (var property in properties)
+            {
+                property.SetValue(this, property.GetValue(data));
+            }
+        }
+
         public string Title { get; set; }
         public string Description { get; set; }
-
-        public DateTimeOffset AddedDateTime { get; set; }
 
         public DateTimeOffset StartDateTime { get; set; } = DateTimeOffset.Now;
         public DateTimeOffset? EndDateTime { get; set; }
 
-        public DateTimeOffset TakeOffDateTime { get; set; }
-        public int TakeOffLocalTime { get; set; }
-        public int TakeOffZuluTime { get; set; }
-        public long TakeOffAbsoluteTime { get; set; }
+        public DateTimeOffset? TakeOffDateTime { get; set; }
         public DateTimeOffset? LandingDateTime { get; set; }
 
         public string Airline { get; set; }
@@ -28,9 +33,6 @@ namespace FlightTracker.DTOs
 
         public AircraftData Aircraft { get; set; }
 
-        public int FuelUsed { get; set; }
-        public int DistanceFlown { get; set; }
-
         public FlightStatus StatusTakeOff { get; set; }
         public FlightStatus StatusLanding { get; set; }
 
@@ -38,6 +40,16 @@ namespace FlightTracker.DTOs
         public FlightState State { get; set; } = FlightState.Started;
 
         public FlightPlan FlightPlan { get; set; }
+    }
+
+    public class FlightData : InputFlightData
+    {
+        public string Id { get; set; }
+
+        public DateTimeOffset AddedDateTime { get; set; }
+
+        public int? FuelUsed { get; set; }
+        public int? DistanceFlown { get; set; }
     }
 
     public enum FlightState

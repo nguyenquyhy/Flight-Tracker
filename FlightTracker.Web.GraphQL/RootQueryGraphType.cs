@@ -19,7 +19,7 @@ namespace FlightTracker.Web
                 {
                     var data = await flightStorage.GetAllAsync();
 
-                    if (context.Arguments.TryGetValue("last", out var lastObj) && lastObj is int last)
+                    if (context.Arguments.TryGetValue<int>("last", out var last))
                     {
                         data = data.OrderByDescending(a => a.AddedDateTime).Take(last);
                     }
@@ -31,15 +31,12 @@ namespace FlightTracker.Web
             FieldAsync<FlightGraphType>(
                  "flight",
                  arguments: new QueryArguments(
-                     new QueryArgument(typeof(StringGraphType)) { Name = "id" }
+                     new QueryArgument(typeof(NonNullGraphType<StringGraphType>)) { Name = "id" }
                  ),
                  resolve: async context =>
                  {
-                     if (context.Arguments.TryGetValue("id", out var idObj) && idObj is string id)
-                     {
-                         return await flightStorage.GetAsync(id);
-                     }
-                     return null;
+                     var id = context.GetArgument<string>("id");
+                     return await flightStorage.GetAsync(id);
                  }
                  );
 
@@ -60,15 +57,12 @@ namespace FlightTracker.Web
             FieldAsync<AircraftGraphType>(
                 "aircraft",
                 arguments: new QueryArguments(
-                    new QueryArgument(typeof(StringGraphType)) { Name = "tailNumber" }
+                    new QueryArgument(typeof(NonNullGraphType<StringGraphType>)) { Name = "tailNumber" }
                 ),
                 resolve: async context =>
                 {
-                    if (context.Arguments.TryGetValue("tailNumber", out var tailNumberObj) && tailNumberObj is string tailNumber)
-                    {
-                        return await flightStorage.GetAircraftAsync(tailNumber);
-                    }
-                    return null;
+                    var tailNumber = context.GetArgument<string>("tailNumber");
+                    return await flightStorage.GetAircraftAsync(tailNumber);
                 }
                 );
         }

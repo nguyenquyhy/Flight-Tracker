@@ -26,7 +26,7 @@ namespace FlightTracker.Clients.Logics
 
         public IntPtr Handle { get; private set; }
 
-        SimConnect simconnect = null;
+        private SimConnect simconnect = null;
 
         public SimConnectLogic(ILogger<SimConnectLogic> logger)
         {
@@ -495,18 +495,16 @@ namespace FlightTracker.Clients.Logics
                                 Id = plan.FlightPlanFlightPlan.DepartureID,
                                 Name = plan.FlightPlanFlightPlan.DepartureName,
                                 Position = plan.FlightPlanFlightPlan.DeparturePosition,
-                                LLA = plan.FlightPlanFlightPlan.DepartureLLA,
                             },
                             Destination = new Point
                             {
                                 Id = plan.FlightPlanFlightPlan.DestinationID,
                                 Name = plan.FlightPlanFlightPlan.DestinationName,
-                                LLA = plan.FlightPlanFlightPlan.DestinationLLA,
                             },
                             CruisingAltitude = plan.FlightPlanFlightPlan.CruisingAlt
                         };
-                        (flightPlan.Departure.Latitude, flightPlan.Departure.Longitude) = GpsHelper.ConvertString(flightPlan.Departure.LLA);
-                        (flightPlan.Destination.Latitude, flightPlan.Destination.Longitude) = GpsHelper.ConvertString(flightPlan.Destination.LLA);
+                        (flightPlan.Departure.Latitude, flightPlan.Departure.Longitude) = GpsHelper.ConvertString(plan.FlightPlanFlightPlan.DepartureLLA);
+                        (flightPlan.Destination.Latitude, flightPlan.Destination.Longitude) = GpsHelper.ConvertString(plan.FlightPlanFlightPlan.DestinationLLA);
 
                         if (plan.FlightPlanFlightPlan.ATCWaypoint != null)
                         {
@@ -518,9 +516,8 @@ namespace FlightTracker.Clients.Logics
                                     Id = waypoint.id,
                                     Type = waypoint.ATCWaypointType,
                                     Airway = waypoint.ATCAirway,
-                                    LLA = waypoint.WorldPosition
                                 };
-                                (w.Latitude, w.Longitude) = GpsHelper.ConvertString(w.LLA);
+                                (w.Latitude, w.Longitude) = GpsHelper.ConvertString(waypoint.WorldPosition);
                                 flightPlan.Waypoints.Add(w);
                             }
                         }

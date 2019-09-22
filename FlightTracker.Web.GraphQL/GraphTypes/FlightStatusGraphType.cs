@@ -8,6 +8,9 @@ namespace FlightTracker.Web
         public FlightStatusGraphType()
         {
             Field(o => o.SimTime);
+            Field(o => o.AbsoluteTime, nullable: true);
+            Field(o => o.LocalTime, nullable: true);
+            Field(o => o.ZuluTime, nullable: true);
             Field(o => o.FuelTotalQuantity);
             Field(o => o.IndicatedAirSpeed);
             Field(o => o.VerticalSpeed);

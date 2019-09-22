@@ -16,15 +16,17 @@ namespace FlightTracker.DTOs
     {
         public string Id { get; set; }
         public string Type { get; set; }
-        public string LLA { get; set; }
-        public string Airway { get; set; }
         public double Latitude { get; set; }
         public double Longitude { get; set; }
+        public string Airway { get; set; }
     }
 
-    public class Point : Waypoint
+    public class Point
     {
+        public string Id { get; set; }
         public string Name { get; set; }
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
         public string Position { get; set; }
     }
 }

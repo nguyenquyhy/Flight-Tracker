@@ -1,6 +1,7 @@
 ﻿using FlightTracker.DTOs;
 using FlightTracker.Web.Data;
 using GraphQL.Types;
+using System.Linq;
 
 namespace FlightTracker.Web
 {
@@ -23,14 +24,7 @@ namespace FlightTracker.Web
             Field(o => o.StatusTakeOff, nullable: true, type: typeof(FlightStatusGraphType));
             Field(o => o.StatusLanding, nullable: true, type: typeof(FlightStatusGraphType));
 
-            Field(o => o.TakeOffDateTime);
-            Field(o => o.TakeOffAbsoluteTime);
-            Field(o => o.TakeOffLocalTime);
-            Field(o => o.TakeOffZuluTime);
-
-            Field<IntGraphType>("landingLocalTime", resolve: context => context.Source.StatusTakeOff != null && context.Source.StatusLanding != null ? 
-                (int?)(int)(context.Source.TakeOffLocalTime - context.Source.StatusTakeOff.SimTime + context.Source.StatusLanding.SimTime) : null);
-
+            Field(o => o.TakeOffDateTime, nullable: true);
             Field(o => o.LandingDateTime, nullable: true);
 
             Field(o => o.AirportFrom, nullable: true);
@@ -39,9 +33,20 @@ namespace FlightTracker.Web
             Field(o => o.State, type: typeof(FlightStateGraphType));
 
             FieldAsync<ListGraphType<FlightStatusGraphType>>("route",
+                arguments: new QueryArguments(
+                    new QueryArgument<UIntGraphType> { Name = "last" }
+                ),
                 resolve: async context =>
                 {
-                    return await flightStorage.GetRouteAsync(context.Source.Id);
+                    System.Diagnostics.Debug.WriteLine($"[{System.DateTime.Now.ToString("HH:mm:ss")}] Start getting route of {context.Source.Id}...");
+                    var route = await flightStorage.GetRouteAsync(context.Source.Id);
+                    System.Diagnostics.Debug.WriteLine($"[{System.DateTime.Now.ToString("HH:mm:ss")}] Got route of {context.Source.Id}.");
+                    if (context.Arguments.TryGetValue<uint>("last", out var last))
+                    {
+                        route = route.TakeLast((int)last).ToList();
+                        System.Diagnostics.Debug.WriteLine($"[{System.DateTime.Now.ToString("HH:mm:ss")}] Filtered route of {context.Source.Id}.");
+                    }
+                    return route;
                 });
         }
     }

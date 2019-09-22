@@ -21,13 +21,14 @@ namespace FlightTracker.Web.Data
 
         public async Task<IEnumerable<FlightData>> GetAllAsync()
         {
-            return await LoadAsync().ConfigureAwait(false);
+            var flights = await LoadAsync().ConfigureAwait(false);
+            return flights.Select(o => o.Value);
         }
 
         public async Task<FlightData> GetAsync(string id)
         {
             var flights = await LoadAsync().ConfigureAwait(false);
-            return flights.FirstOrDefault(flight => flight.Id == id);
+            return flights[id];
         }
 
         public async Task<FlightData> AddAsync(FlightData data)
@@ -42,7 +43,7 @@ namespace FlightTracker.Web.Data
                     Id = Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture),
                     AddedDateTime = DateTimeOffset.UtcNow
                 };
-                flights.Add(flight);
+                flights.Add(flight.Id, flight);
                 await SaveAsync(flights).ConfigureAwait(false);
                 return flight.ToDTO();
             }
@@ -61,8 +62,7 @@ namespace FlightTracker.Web.Data
                 await flightsSm.WaitAsync().ConfigureAwait(false);
 
                 var flights = await LoadAsync().ConfigureAwait(false);
-                var flight = flights.FirstOrDefault(o => o.Id == id);
-                if (flight != null)
+                if (flights.TryGetValue(id, out var flight))
                 {
                     flight.Update(data);
                 }
@@ -73,7 +73,7 @@ namespace FlightTracker.Web.Data
                         Id = id,
                         AddedDateTime = DateTimeOffset.UtcNow
                     };
-                    flights.Add(flight);
+                    flights.Add(id, flight);
                 }
                 await SaveAsync(flights).ConfigureAwait(false);
 
@@ -95,7 +95,7 @@ namespace FlightTracker.Web.Data
 
                 var flights = await LoadAsync().ConfigureAwait(false);
 
-                var flight = flights.First(o => o.Id == id);
+                var flight = flights[id];
                 if (data.Title != null) flight.Title = data.Title;
                 if (data.Description != null) flight.Description = data.Description;
 
@@ -116,10 +116,12 @@ namespace FlightTracker.Web.Data
                 await flightsSm.WaitAsync().ConfigureAwait(false);
 
                 var flights = await LoadAsync().ConfigureAwait(false);
-                var count = flights.RemoveAll(flight => flight.Id == id);
-                await SaveAsync(flights).ConfigureAwait(false);
-
-                return count > 0;
+                if (flights.Remove(id))
+                {
+                    await SaveAsync(flights).ConfigureAwait(false);
+                    return true;
+                }
+                return false;
             }
             finally
             {
@@ -134,7 +136,7 @@ namespace FlightTracker.Web.Data
                 await flightsSm.WaitAsync().ConfigureAwait(false);
 
                 var flights = await LoadAsync().ConfigureAwait(false);
-                var flight = flights.First(o => o.Id == id);
+                var flight = flights[id];
 
                 return flight.Statuses;
             }
@@ -151,7 +153,7 @@ namespace FlightTracker.Web.Data
                 await flightsSm.WaitAsync().ConfigureAwait(false);
 
                 var flights = await LoadAsync().ConfigureAwait(false);
-                var flight = flights.First(o => o.Id == id);
+                var flight = flights[id];
                 flight.Statuses = route;
                 await SaveAsync(flights).ConfigureAwait(false);
 
@@ -166,9 +168,10 @@ namespace FlightTracker.Web.Data
         public async IAsyncEnumerable<AircraftData> GetAllAircraftsAsync()
         {
             var flights = await LoadAsync().ConfigureAwait(false);
-            flights = flights.Where(o => o.Aircraft != null).ToList();
-
-            var groups = flights.GroupBy(o => o.Aircraft.TailNumber);
+            var groups = flights
+                .Select(o => o.Value)
+                .Where(o => o.Aircraft != null)
+                .GroupBy(o => o.Aircraft.TailNumber);
 
             foreach (var group in groups)
             {
@@ -181,9 +184,11 @@ namespace FlightTracker.Web.Data
         public async Task<AircraftData> GetAircraftAsync(string tailNumber)
         {
             var flights = await LoadAsync().ConfigureAwait(false);
-            flights = flights.Where(o => tailNumber.Equals(o.Aircraft?.TailNumber, StringComparison.InvariantCultureIgnoreCase)).ToList();
-            var aircraft = flights.First().Aircraft;
-            aircraft.PictureUrls = flights.Where(o => o.Statuses != null).SelectMany(o => o.Statuses.Where(s => !string.IsNullOrEmpty(s.ScreenshotUrl))).Select(o => o.ScreenshotUrl).ToList();
+            var flightsWithAircraft = flights
+                .Select(o => o.Value)
+                .Where(o => tailNumber.Equals(o.Aircraft?.TailNumber, StringComparison.InvariantCultureIgnoreCase));
+            var aircraft = flightsWithAircraft.First().Aircraft;
+            aircraft.PictureUrls = flightsWithAircraft.Where(o => o.Statuses != null).SelectMany(o => o.Statuses.Where(s => !string.IsNullOrEmpty(s.ScreenshotUrl))).Select(o => o.ScreenshotUrl).ToList();
             return aircraft;
         }
 
@@ -191,6 +196,7 @@ namespace FlightTracker.Web.Data
         {
             var flights = await LoadAsync().ConfigureAwait(false);
             return flights
+                .Select(o => o.Value)
                 .Where(o => tailNumber.Equals(o.Aircraft?.TailNumber, StringComparison.InvariantCultureIgnoreCase))
                 .Where(o => o.Statuses != null)
                 .SelectMany(o => o.Statuses.Where(s => !string.IsNullOrEmpty(s.ScreenshotUrl)))
@@ -202,15 +208,14 @@ namespace FlightTracker.Web.Data
     {
         private static readonly SemaphoreSlim sm = new SemaphoreSlim(1);
         private readonly string filePath;
-        private List<FlightWrapper> data = null;
-
+        private Dictionary<string, FlightWrapper> data = null;
 
         public JsonFileFlightStorageBase(string filePath)
         {
             this.filePath = filePath;
         }
 
-        protected async Task<List<FlightWrapper>> LoadAsync()
+        protected async Task<Dictionary<string, FlightWrapper>> LoadAsync()
         {
             if (data == null)
             {
@@ -220,11 +225,12 @@ namespace FlightTracker.Web.Data
                     if (File.Exists(filePath))
                     {
                         var dataString = await File.ReadAllTextAsync(filePath).ConfigureAwait(false);
-                        data = JsonConvert.DeserializeObject<List<FlightWrapper>>(dataString);
+                        var list = JsonConvert.DeserializeObject<List<FlightWrapper>>(dataString);
+                        data = list.ToDictionary(o => o.Id, o => o);
                     }
                     else
                     {
-                        data = new List<FlightWrapper>();
+                        data = new Dictionary<string, FlightWrapper>();
                     }
                 }
                 finally
@@ -232,10 +238,10 @@ namespace FlightTracker.Web.Data
                     sm.Release();
                 }
             }
-            return data.Select(o => o.Clone()).ToList();
+            return data;
         }
 
-        protected async Task SaveAsync(List<FlightWrapper> data)
+        protected async Task SaveAsync(Dictionary<string, FlightWrapper> data)
         {
             if (data == null) return;
 
@@ -243,7 +249,8 @@ namespace FlightTracker.Web.Data
             {
                 await sm.WaitAsync().ConfigureAwait(false);
                 if (File.Exists(filePath)) File.Move(filePath, filePath + ".bak", true);
-                await File.WriteAllTextAsync(filePath, JsonConvert.SerializeObject(data, new JsonSerializerSettings
+                var list = data.Select(o => o.Value);
+                await File.WriteAllTextAsync(filePath, JsonConvert.SerializeObject(list, new JsonSerializerSettings
                 {
                     NullValueHandling = NullValueHandling.Ignore
                 })).ConfigureAwait(false);
@@ -275,9 +282,6 @@ namespace FlightTracker.Web.Data
             EndDateTime = data.EndDateTime;
 
             TakeOffDateTime = data.TakeOffDateTime;
-            TakeOffLocalTime = data.TakeOffLocalTime;
-            TakeOffZuluTime = data.TakeOffZuluTime;
-            TakeOffAbsoluteTime = data.TakeOffAbsoluteTime;
             LandingDateTime = data.LandingDateTime;
 
             Airline = data.Airline;
@@ -312,9 +316,6 @@ namespace FlightTracker.Web.Data
                 EndDateTime = EndDateTime,
 
                 TakeOffDateTime = TakeOffDateTime,
-                TakeOffLocalTime = TakeOffLocalTime,
-                TakeOffZuluTime = TakeOffZuluTime,
-                TakeOffAbsoluteTime = TakeOffAbsoluteTime,
                 LandingDateTime = LandingDateTime,
 
                 Airline = Airline,
@@ -346,9 +347,6 @@ namespace FlightTracker.Web.Data
             EndDateTime = data.EndDateTime;
 
             TakeOffDateTime = data.TakeOffDateTime;
-            TakeOffLocalTime = data.TakeOffLocalTime;
-            TakeOffZuluTime = data.TakeOffZuluTime;
-            TakeOffAbsoluteTime = data.TakeOffAbsoluteTime;
             LandingDateTime = data.LandingDateTime;
 
             Airline = data.Airline;
@@ -365,11 +363,6 @@ namespace FlightTracker.Web.Data
             StatusLanding = data.StatusLanding;
 
             State = data.State;
-        }
-
-        public FlightWrapper Clone()
-        {
-            return JsonConvert.DeserializeObject<FlightWrapper>(JsonConvert.SerializeObject(this));
         }
     }
 }

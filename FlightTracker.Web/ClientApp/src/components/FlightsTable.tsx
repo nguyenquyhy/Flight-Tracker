@@ -125,13 +125,21 @@ class Row extends Component<RowProps, RowState> {
         }
     }
 
+    private renderTime(flight: FlightData) {
+        const takeOffTime = !!flight.statusTakeOff ? secondsToTime(flight.statusTakeOff.localTime) : '';
+        switch (flight.state) {
+            case "STARTED": return <>-</>;
+            case "ENROUTE": return <>{takeOffTime} - </>
+            case "CRASHED": return <>{takeOffTime} - <Red>{flight.route && secondsToTime(flight.route[0].localTime)}</Red></>
+            case "ARRIVED": return <>{takeOffTime} - {!!flight.statusLanding && secondsToTime(flight.statusLanding.localTime)}</>
+        }
+    }
+
     public render() {
         const flight = this.props.flight;
         return <StyledRow state={flight.state}>
             <td><Link to={`flights/${flight.id}`}>{new Date(flight.startDateTime).toLocaleDateString()}</Link></td>
-            <td><Link to={`flights/${flight.id}`}>
-                {flight.takeOffLocalTime !== null && secondsToTime(flight.takeOffLocalTime, true)} - {flight.landingLocalTime != null && secondsToTime(flight.landingLocalTime, true)}
-            </Link></td>
+            <td><Link to={`flights/${flight.id}`}>{this.renderTime(flight)}</Link></td>
             <td><Link to={`flights/${flight.id}`}>{flight.title || 'Unnamed'}</Link></td>
             <td><Link to={`flights/${flight.id}`}>{flight.airportFrom}</Link></td>
             <td><Link to={`flights/${flight.id}`}>{flight.airportTo}</Link></td>
@@ -143,6 +151,8 @@ class Row extends Component<RowProps, RowState> {
         </StyledRow>
     }
 }
+
+const Red = styled.span`color: red`
 
 const StyledRow = styled.tr`
 span.state {

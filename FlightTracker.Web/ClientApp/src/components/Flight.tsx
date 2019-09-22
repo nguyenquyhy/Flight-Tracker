@@ -126,12 +126,12 @@ class Flight extends Component<Props, State> {
                             <tr><td>Local Time</td><td>{startDateTime.toLocaleDateString()} {startDateTime.toLocaleTimeString()} {duration}</td></tr>
                             {flight.statusTakeOff && flight.statusLanding ?
                                 <>
-                                    <tr><td>Take-off/Landing Time</td><td>{secondsToTime(flight.takeOffLocalTime)} - {secondsToTime(flight.takeOffLocalTime + flight.statusLanding.simTime - flight.statusTakeOff.simTime)}</td></tr>
+                                    <tr><td>Take-off/Landing Time</td><td>{secondsToTime(flight.statusTakeOff.localTime)} - {secondsToTime(flight.statusLanding.localTime)}</td></tr>
                                     <tr><td>Full Duration</td><td>{Flight.formatDuration(flight.statusLanding.simTime - flight.statusTakeOff.simTime)}</td></tr>
                                     <tr><td>Fuel Used</td><td>{Math.round((flight.statusTakeOff.fuelTotalQuantity - flight.statusLanding.fuelTotalQuantity) * 10) / 10} lb</td></tr>
                                 </> :
                                 flight.statusTakeOff && <>
-                                    <tr><td>Take-off Time</td><td>{secondsToTime(flight.takeOffLocalTime)}</td></tr>
+                                    <tr><td>Take-off Time</td><td>{secondsToTime(flight.statusTakeOff.localTime)}</td></tr>
                                 </>
                             }
                             {flight.statusTakeOff && <tr><td>Take-off IAS</td><td>{flight.statusTakeOff.indicatedAirSpeed}</td></tr>}
@@ -333,14 +333,16 @@ export const statusToThickness = (status: FlightStatus) => {
     return 5;
 }
 
-export const secondsToTime = (seconds: number, padZero?: boolean) => {
+export const secondsToTime = (seconds?: number) => {
+    if (seconds === undefined || seconds === null) return '';
+
     let mins = Math.floor(seconds / 60);
     seconds -= mins * 60;
     seconds = Math.round(seconds);
     let hours = Math.floor(mins / 60);
     mins -= hours * 60;
 
-    if (padZero && hours < 10)
+    if (hours < 10)
         return "0" + hours + ":" + Flight.pad(mins);
     return hours + ":" + Flight.pad(mins);
 }

@@ -25,9 +25,9 @@ namespace FlightTracker.Clients.Logics
 
         private readonly List<AirportData> airports = new List<AirportData>();
 
-        int localTime = 0;
-        int zuluTime = 0;
-        long absoluteTime = 0;
+        int? localTime = null;
+        int? zuluTime = null;
+        long? absoluteTime = null;
 
         DateTime? lastSaveAttempt = null;
 
@@ -153,6 +153,11 @@ namespace FlightTracker.Clients.Logics
 
         private async void FlightStatusUpdater_FlightStatusUpdated(object sender, FlightStatusUpdatedEventArgs e)
         {
+            // Augment environment time
+            e.FlightStatus.LocalTime = localTime;
+            e.FlightStatus.ZuluTime = zuluTime;
+            e.FlightStatus.AbsoluteTime = absoluteTime;
+
             var lastStatus = flightRoute.LastOrDefault();
 
             if (lastStatus != null && lastStatus.IsOnGround && !e.FlightStatus.IsOnGround && flightData.State == FlightState.Started)
@@ -163,9 +168,6 @@ namespace FlightTracker.Clients.Logics
                 flightData.State = FlightState.Enroute;
 
                 flightData.TakeOffDateTime = DateTimeOffset.Now;
-                flightData.TakeOffLocalTime = localTime;
-                flightData.TakeOffZuluTime = zuluTime;
-                flightData.TakeOffAbsoluteTime = absoluteTime;
 
                 // Try to determine airport
                 if (airports != null && flightData.AirportFrom == null)
@@ -260,7 +262,7 @@ namespace FlightTracker.Clients.Logics
                 lastSaveAttempt = DateTime.Now;
                 if (flightData.Id == null)
                 {
-                    var newData = await flightsAPIClient.PostAsync(flightData);
+                    var newData = await flightsAPIClient.AddFlightAsync(flightData);
 
                     // Copy data since it might be changed already;
                     newData.Title = flightData.Title;
@@ -276,7 +278,7 @@ namespace FlightTracker.Clients.Logics
                 }
                 else
                 {
-                    var savedData = await flightsAPIClient.PutAsync(flightData.Id, flightData);
+                    await flightsAPIClient.UpdateFlightAsync(flightData.Id, flightData);
                     if (flightRoute.Any())
                     {
                         await flightsAPIClient.PostRouteAsync(flightData.Id, flightRoute);
