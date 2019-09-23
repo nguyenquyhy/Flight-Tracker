@@ -5,9 +5,11 @@ using GraphQL.Server;
 using GraphQL.Server.Ui.GraphiQL;
 using GraphQL.Server.Ui.Playground;
 using GraphQL.Server.Ui.Voyager;
+using GraphQL.Validation;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.Extensions.Configuration;
@@ -15,6 +17,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json.Serialization;
 
@@ -44,7 +47,18 @@ namespace FlightTracker.Web
                 .AddGraphQL()
                 .AddGraphTypes(typeof(RootSchema).Assembly)
                 .AddDataLoader()
-                .AddWebSockets();
+                .AddWebSockets()
+                .AddUserContextBuilder(context =>
+                {
+                    return new Dictionary<string, object>
+                    {
+                        ["user"] = context.User
+                    };
+                });
+
+            services
+                .AddTransient<IHttpContextAccessor, HttpContextAccessor>()
+                .AddTransient<IValidationRule, GraphQL.Server.Authorization.AspNetCore.AuthorizationValidationRule>();
 
             services
                 .AddSingleton(s => new RootSchema(new FuncServiceProvider(t => s.GetRequiredService(t))));
@@ -54,7 +68,7 @@ namespace FlightTracker.Web
                 configuration.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                 configuration.JsonSerializerOptions.IgnoreNullValues = true;
             });
-            
+
             services.AddSignalR();
 
             // In production, the React files will be served from this directory
@@ -110,6 +124,11 @@ namespace FlightTracker.Web
                         }
                     };
                 });
+
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("Authenticated", policy => policy.RequireAuthenticatedUser());
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

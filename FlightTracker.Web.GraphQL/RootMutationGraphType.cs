@@ -1,5 +1,6 @@
 ﻿using FlightTracker.DTOs;
 using FlightTracker.Web.Data;
+using GraphQL.Authorization;
 using GraphQL.Types;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,7 +47,7 @@ namespace FlightTracker.Web
                 arguments: new QueryArguments(
                     new QueryArgument<NonNullGraphType<StringGraphType>> { Name = "id" }
                 ),
-                resolve: ResolveDeleteFlight);
+                resolve: ResolveDeleteFlight).AuthorizeWith("Authenticated");
         }
 
         private async Task<object> ResolveAddFlight(ResolveFieldContext<object> context)
