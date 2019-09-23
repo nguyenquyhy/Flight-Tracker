@@ -46,6 +46,7 @@ namespace FlightTracker.Clients.WpfApp
 
         public void DisplayLog(LogWrapper log)
         {
+            if (log == null) return;
             try
             {
                 var content = $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)}] [{log.LogLevel.ToString()}] {log.FormattedString}";

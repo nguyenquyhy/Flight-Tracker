@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@microsoft/signalr": "^3.0.0-preview9.19424.4",
+    "@microsoft/signalr": "^3.0.0",
     "bootstrap": "^4.3.1",
     "jquery": "^3.4.1",
     "merge": "^1.2.1",
