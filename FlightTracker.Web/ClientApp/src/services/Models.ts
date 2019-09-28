@@ -71,7 +71,7 @@ export interface FlightStatus {
 
     latitude: number;
     longitude: number;
-    attitude: number;
+    altitude: number;
 
     heading: number;
     trueHeading: number;

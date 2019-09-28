@@ -3,6 +3,7 @@ import { RouteComponentProps } from "react-router";
 import SimpleLightBox from "simple-lightbox";
 import "simple-lightbox/dist/simpleLightbox.css";
 import Slider from 'react-slick';
+import { Scatter } from 'react-chartjs-2';
 import GooglePageWrapper from "./hoc/GooglePageWrapper";
 import { FlightData, FlightStatus } from "../services/Models";
 import { ServicesContext, ConfigsContext } from "../Context";
@@ -25,6 +26,8 @@ class Flight extends Component<Props, State> {
     static contextType = ServicesContext;
 
     context!: React.ContextType<typeof ServicesContext>;
+    aircraftMarker: google.maps.Marker | null = null;
+    map: google.maps.Map | null = null;
 
     constructor(props) {
         super(props);
@@ -144,7 +147,68 @@ class Flight extends Component<Props, State> {
                         </tbody>
                     </table>
                     <p><em>*Blue: on the ground. Purple: autopilot off. Green: autopilot on</em></p>
+
                     <div id="map" style={{ width: '100%', height: 800 }}></div>
+
+                    {this.state.statuses &&
+                        <div style={{ height: 300 }}>
+                            <Scatter
+                                data={{
+                                    datasets: [
+                                        {
+                                            label: 'Altitude',
+                                            data: this.state.statuses.map(o => ({
+                                                x: o.simTime,
+                                                y: o.altitude
+                                            }))
+                                        }
+                                    ]
+                                }}
+                                options={{
+                                    maintainAspectRatio: false,
+                                    scales: {
+                                        xAxes: [{
+                                            scaleLabel: {
+                                                display: true,
+                                                labelString: 'Simulation Time (second)'
+                                            }
+                                        }],
+                                        yAxes: [{
+                                            scaleLabel: {
+                                                display: true,
+                                                labelString: 'Altitude (ft)'
+                                            }
+                                        }]
+                                    },
+                                    tooltips: {
+                                        callbacks: {
+                                            title: (item) => typeof (item[0].xLabel) === 'number' ? `Time: ${Math.round(item[0].xLabel)}s.` : (item[0].xLabel || ''),
+                                            label: (item) => typeof (item.yLabel) === 'number' ? `Altitude: ${Math.round(item.yLabel)}ft.` : (item[0].yLabel || '')
+                                        }
+                                    },
+                                    onHover: (_, elements) => {
+                                        if (this.map && this.aircraftMarker && this.state.statuses) {
+                                            if (elements.length > 0) {
+                                                const element = elements[0] as any;
+                                                const status = this.state.statuses[element._index];
+                                                this.aircraftMarker.setMap(this.map);
+                                                this.aircraftMarker.setPosition({ lat: status.latitude, lng: status.longitude });
+                                                this.aircraftMarker.setIcon({
+                                                    path: "M448 336v-40L288 192V79.2c0-17.7-14.8-31.2-32-31.2s-32 13.5-32 31.2V192L64 296v40l160-48v113.6l-48 31.2V464l80-16 80 16v-31.2l-48-31.2V288l160 48z",
+                                                    scale: 0.06,
+                                                    anchor: new google.maps.Point(16 / 0.06, 16 / 0.06),
+                                                    rotation: status.trueHeading,
+                                                    fillColor: '#0000bb',
+                                                    fillOpacity: 0.8
+                                                })
+                                            } else {
+                                                this.aircraftMarker.setMap(null);
+                                            }
+                                        }
+                                    }
+                                }} />
+                        </div>
+                    }
 
                     <div style={{ overflowX: 'hidden', overflowY: 'visible', height: 360, marginTop: 10 }}>
                         <Slider {...sliderProperties}>
@@ -196,6 +260,7 @@ class Flight extends Component<Props, State> {
                 },
                 mapTypeId: google.maps.MapTypeId.TERRAIN
             });
+            this.map = map;
 
             map.fitBounds({
                 north: north,
@@ -203,6 +268,8 @@ class Flight extends Component<Props, State> {
                 east: east,
                 west: west
             })
+
+            this.aircraftMarker = new google.maps.Marker();
 
             let infoWindow = new google.maps.InfoWindow();
 

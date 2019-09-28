@@ -85,6 +85,8 @@ export default class ApiService {
             simTime
             latitude
             longitude
+            altitude
+            trueHeading
             screenshotUrl
             isOnGround
             isAutopilotOn

@@ -16,7 +16,8 @@ This project allows you to record your flight in your own personal cloud storage
   - [X] Google account
   - [ ] Microsoft account
 - [ ] Aircraft fleet
-- [ ] Image gallery
-  - [ ] Each flight
+- [X] Image gallery
+  - [X] Each flight
   - [ ] Each aircraft
-- [ ] Attitude chart
+- [X] Altitude chart
+  - [X] Hover chart to see aircraft icon on map
