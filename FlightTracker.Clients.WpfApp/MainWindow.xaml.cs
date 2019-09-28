@@ -120,7 +120,7 @@ namespace FlightTracker.Clients.WpfApp
 
         private async void ButtonSaveAndNew_Click(object sender, RoutedEventArgs e)
         {
-            await flightLogic.NewFlightAsync(false, viewModel.Title);
+            await flightLogic.NewFlightAsync(FlightLogic.NewFlightReason.UserRequest, viewModel.Title).ConfigureAwait(true);
         }
 
         private void TextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)

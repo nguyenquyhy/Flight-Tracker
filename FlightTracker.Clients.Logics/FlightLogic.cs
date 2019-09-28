@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -51,6 +52,7 @@ namespace FlightTracker.Clients.Logics
             flightStatusUpdater.FlightStatusUpdated += FlightStatusUpdater_FlightStatusUpdated;
             flightStatusUpdater.Crashed += FlightStatusUpdater_CrashedAsync;
             flightStatusUpdater.CrashReset += FlightStatusUpdater_CrashReset;
+            flightStatusUpdater.Closed += FlightStatusUpdater_Closed;
         }
 
         public async Task DumpAsync()
@@ -67,20 +69,29 @@ namespace FlightTracker.Clients.Logics
             if (flightData != null)
             {
                 logger.LogInformation("Saving flight manually");
-                await AddOrUpdateFlightAsync(true);
+                var result = await AddOrUpdateFlightAsync(true);
+                logger.LogInformation(result ? "Saved current flight" : "Cannot save current flight");
             }
         }
 
-        public async Task NewFlightAsync(bool crashed, string title)
+        public enum NewFlightReason
+        {
+            UserRequest,
+            Crashed,
+            Closed
+        }
+
+        public async Task NewFlightAsync(NewFlightReason reason, string title)
         {
             // TODO: Flush current flight
             if (flightData != null && flightData.State != FlightState.Started && flightData.Id != null)
             {
                 logger.LogInformation("Trying to save existing flight");
-                await AddOrUpdateFlightAsync();
+                var result = await AddOrUpdateFlightAsync();
+                logger.LogInformation(result ? "Saved existing flight" : "Cannot save existing flight");
             }
 
-            if (crashed)
+            if (reason == NewFlightReason.Crashed)
             {
                 tcsCrashReset = new TaskCompletionSource<bool>();
                 await tcsCrashReset.Task;
@@ -231,11 +242,14 @@ namespace FlightTracker.Clients.Logics
 
         private async void FlightStatusUpdater_CrashedAsync(object sender, EventArgs e)
         {
-            logger.LogInformation("Aircraft has crashed");
-            flightData.State = FlightState.Crashed;
-            flightData.AirportTo = null;
+            if (flightData != null)
+            {
+                logger.LogInformation("Aircraft has crashed");
+                flightData.State = FlightState.Crashed;
+                flightData.AirportTo = null;
 
-            await NewFlightAsync(true, flightData.Title);
+                await NewFlightAsync(NewFlightReason.Crashed, flightData.Title);
+            }
         }
 
         private void FlightStatusUpdater_CrashReset(object sender, EventArgs e)
@@ -246,13 +260,31 @@ namespace FlightTracker.Clients.Logics
             }
         }
 
+        private async void FlightStatusUpdater_Closed(object sender, EventArgs e)
+        {
+            if (flightData != null)
+            {
+                if (flightData.State == FlightState.Enroute)
+                {
+                    logger.LogInformation("Set flight status to lost");
+                    flightData.State = FlightState.Lost;
+                }
+                await NewFlightAsync(NewFlightReason.Closed, flightData.Title);
+            }
+        }
+
         public bool IsSaving { get; private set; }
+        private bool isLate = false;
 
         private async Task<bool> AddOrUpdateFlightAsync(bool force = false)
         {
             if (!force && IsSaving)
             {
-                logger.LogInformation("Last save is still running. Skip this save!");
+                if (!isLate)
+                {
+                    isLate = true;
+                    logger.LogInformation("Last save is still running. Skip this save!");
+                }
                 return false;
             }
 
@@ -260,6 +292,9 @@ namespace FlightTracker.Clients.Logics
             {
                 IsSaving = true;
                 lastSaveAttempt = DateTime.Now;
+
+                var stopWatch = new Stopwatch();
+                stopWatch.Start();
                 if (flightData.Id == null)
                 {
                     var newData = await flightsAPIClient.AddFlightAsync(flightData);
@@ -284,6 +319,13 @@ namespace FlightTracker.Clients.Logics
                         await flightsAPIClient.PostRouteAsync(flightData.Id, flightRoute);
                     }
                 }
+                
+                if (isLate)
+                {
+                    isLate = false;
+                    logger.LogWarning($"This save took {stopWatch.ElapsedMilliseconds}ms!");
+                }
+                stopWatch.Stop();
             }
             catch (HttpRequestException ex)
             {

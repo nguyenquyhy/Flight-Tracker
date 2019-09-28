@@ -20,6 +20,8 @@ namespace FlightTracker.Clients.Logics
         public event EventHandler Crashed;
         public event EventHandler CrashReset;
 
+        public event EventHandler Closed;
+
         // User-defined win32 event
         const int WM_USER_SIMCONNECT = 0x0402;
         private readonly ILogger<SimConnectLogic> logger;
@@ -109,17 +111,30 @@ namespace FlightTracker.Clients.Logics
 
         public void CloseConnection()
         {
-            if (simconnect != null)
+            try
             {
-                simconnect.UnsubscribeFromSystemEvent(EVENTS.SIM_START);
-                simconnect.UnsubscribeFromSystemEvent(EVENTS.SIM_STOP);
-                simconnect.UnsubscribeFromSystemEvent(EVENTS.PAUSED);
-                simconnect.UnsubscribeFromSystemEvent(EVENTS.FLIGHT_LOADED);
-                simconnect.UnsubscribeToFacilities(SIMCONNECT_FACILITY_LIST_TYPE.AIRPORT);
+                if (simconnect != null)
+                {
+                    simconnect.UnsubscribeFromSystemEvent(EVENTS.SIM_START);
+                    simconnect.UnsubscribeFromSystemEvent(EVENTS.SIM_STOP);
+                    simconnect.UnsubscribeFromSystemEvent(EVENTS.PAUSED);
+                    simconnect.UnsubscribeFromSystemEvent(EVENTS.AIRCRAFT_LOADED);
+                    simconnect.UnsubscribeFromSystemEvent(EVENTS.FLIGHT_LOADED);
+                    simconnect.UnsubscribeFromSystemEvent(EVENTS.CRASHED);
+                    simconnect.UnsubscribeFromSystemEvent(EVENTS.CRASH_RESET);
+                    simconnect.UnsubscribeFromSystemEvent(EVENTS.FLIGHTPLAN_ACTIVATED);
+                    simconnect.UnsubscribeFromSystemEvent(EVENTS.FLIGHTPLAN_DEACTIVATED);
+                    simconnect.UnsubscribeFromSystemEvent(EVENTS.POSITION_CHANGED);
+                    simconnect.UnsubscribeToFacilities(SIMCONNECT_FACILITY_LIST_TYPE.AIRPORT);
 
-                // Dispose serves the same purpose as SimConnect_Close()
-                simconnect.Dispose();
-                simconnect = null;
+                    // Dispose serves the same purpose as SimConnect_Close()
+                    simconnect.Dispose();
+                    simconnect = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning($"Cannot unsubscribe events! Error: {ex.Message}");
             }
         }
 
@@ -555,7 +570,7 @@ namespace FlightTracker.Clients.Logics
                     break;
                 case EVENTS.FLIGHTPLAN_ACTIVATED:
                     logger.LogInformation("Flight plan activated");
-                    
+
                     break;
                 case EVENTS.FLIGHTPLAN_DEACTIVATED:
                     logger.LogInformation("Flight plan deactivated");
@@ -613,6 +628,7 @@ namespace FlightTracker.Clients.Logics
         void simconnect_OnRecvQuit(SimConnect sender, SIMCONNECT_RECV data)
         {
             logger.LogInformation("Prepar3D has exited");
+            Closed?.Invoke(this, new EventArgs());
             CloseConnection();
         }
 
@@ -623,7 +639,7 @@ namespace FlightTracker.Clients.Logics
 
         private void simconnect_OnRecvAirportList(SimConnect sender, SIMCONNECT_RECV_AIRPORT_LIST data)
         {
-            logger.LogInformation("Received Airport List");
+            logger.LogDebug("Received Airport List");
 
             AirportListUpdated?.Invoke(this, new AirportListUpdatedEventArgs(data.rgData.Cast<SIMCONNECT_DATA_FACILITY_AIRPORT>().Select(airport => new AirportData
             {

@@ -18,6 +18,7 @@ namespace FlightTracker.Clients.Logics
         event EventHandler<FlightStatusUpdatedEventArgs> FlightStatusUpdated;
         event EventHandler Crashed;
         event EventHandler CrashReset;
+        event EventHandler Closed;
 
         void Screenshot();
     }

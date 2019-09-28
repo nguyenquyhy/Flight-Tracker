@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -17,6 +18,7 @@ namespace FlightTracker.Clients.WpfApp
         public ServiceProvider ServiceProvider { get; private set; }
 
         private MainWindow mainWindow = null;
+        private IntPtr Handle;
 
         public IConfigurationRoot Configuration { get; private set; }
 
@@ -86,28 +88,44 @@ namespace FlightTracker.Clients.WpfApp
             var simConnect = ServiceProvider.GetService<SimConnectLogic>();
             if (simConnect != null)
             {
+                simConnect.Closed += SimConnect_Closed;
+
                 // Create an event handle for the WPF window to listen for SimConnect events
-                var Handle = new WindowInteropHelper(sender as Window).Handle; // Get handle of main WPF Window
+                Handle = new WindowInteropHelper(sender as Window).Handle; // Get handle of main WPF Window
                 var HandleSource = HwndSource.FromHwnd(Handle); // Get source of handle in order to add event handlers to it
                 HandleSource.AddHook(simConnect.HandleSimConnectEvents);
                 var viewModel = ServiceProvider.GetService<FlightInfoViewModel>();
 
-                while (true)
+                await InitializeSimConnectsync(simConnect, viewModel).ConfigureAwait(true);
+            }
+        }
+
+        private async Task InitializeSimConnectsync(SimConnectLogic simConnect, FlightInfoViewModel viewModel)
+        {
+            while (true)
+            {
+                try
                 {
-                    try
-                    {
-                        viewModel.SimConnectionState = ConnectionState.Connecting;
-                        simConnect.Initialize(Handle);
-                        viewModel.SimConnectionState = ConnectionState.Connected;
-                        break;
-                    }
-                    catch (COMException)
-                    {
-                        viewModel.SimConnectionState = ConnectionState.Failed;
-                        await Task.Delay(5000);
-                    }
+                    viewModel.SimConnectionState = ConnectionState.Connecting;
+                    simConnect.Initialize(Handle);
+                    viewModel.SimConnectionState = ConnectionState.Connected;
+                    break;
+                }
+                catch (COMException)
+                {
+                    viewModel.SimConnectionState = ConnectionState.Failed;
+                    await Task.Delay(5000).ConfigureAwait(true);
                 }
             }
+        }
+
+        private async void SimConnect_Closed(object sender, EventArgs e)
+        {
+            var simConnect = ServiceProvider.GetService<SimConnectLogic>();
+            var viewModel = ServiceProvider.GetService<FlightInfoViewModel>();
+            viewModel.SimConnectionState = ConnectionState.Idle;
+
+            await InitializeSimConnectsync(simConnect, viewModel).ConfigureAwait(true);
         }
     }
 }
