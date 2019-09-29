@@ -1,4 +1,4 @@
-﻿import { Configs, FlightData, AircraftData, FlightStatus } from "./Models";
+﻿import { Configs, FlightData, AircraftData, FlightStatus, FlightPlan } from "./Models";
 
 type Partial<T> = {
     [P in keyof T]?: T[P];
@@ -76,6 +76,44 @@ export default class ApiService {
             { id: id }
         );
         return data.flight as FlightData;
+    }
+
+    async getFlightPlan(id: string) {
+        const query = `query ($id: String!) { 
+    flight(id: $id) { 
+        flightPlan {
+            title
+            cruisingAltitude
+            departure {
+                id
+                name
+                latitude
+                longitude
+                position
+            }
+            destination {
+                id
+                name
+                latitude
+                longitude
+                position
+            }
+            waypoints {
+                id
+                type
+                latitude
+                longitude
+                airway
+            }
+        }
+    } 
+}`
+
+        const data = await this.graphQLquery(
+            query,
+            { id: id }
+        );
+        return data.flight.flightPlan as FlightPlan;
     }
 
     async getFlightRoute(id: string) {

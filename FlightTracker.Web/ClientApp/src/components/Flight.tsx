@@ -368,6 +368,32 @@ class Flight extends Component<Props, State> {
                 path.setPath(arr.map(s => ({ lat: s.latitude, lng: s.longitude })))
             }
         }
+
+        if (this.map) {
+            const flightPlan = await this.context.api.getFlightPlan(this.props.match.params.id);
+            if (flightPlan && flightPlan.waypoints) {
+                const flightPlanPath = new google.maps.Polyline({
+                    path: flightPlan.waypoints.map(waypoint => ({ lat: waypoint.latitude, lng: waypoint.longitude })),
+                    geodesic: true,
+                    strokeColor: '#FF0000',
+                    strokeOpacity: 1.0,
+                    strokeWeight: 2,
+                    map: this.map
+                });
+
+                const waypoints: google.maps.Marker[] = [];
+                for (let i = 0; i < flightPlan.waypoints.length; i++) {
+                    let current = flightPlan.waypoints[i];
+                    waypoints.push(new google.maps.Marker({
+                        position: {
+                            lat: current.latitude, lng: current.longitude
+                        },
+                        label: current.id,
+                        map: this.map
+                    }));
+                }
+            }
+        }
     }
 
     static formatDuration(seconds: number) {

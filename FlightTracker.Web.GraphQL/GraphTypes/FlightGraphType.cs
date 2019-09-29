@@ -32,6 +32,8 @@ namespace FlightTracker.Web
 
             Field(o => o.State, type: typeof(FlightStateGraphType));
 
+            Field(o => o.FlightPlan, type: typeof(FlightPlanGraphType));
+
             FieldAsync<ListGraphType<FlightStatusGraphType>>("route",
                 arguments: new QueryArguments(
                     new QueryArgument<UIntGraphType> { Name = "last" }

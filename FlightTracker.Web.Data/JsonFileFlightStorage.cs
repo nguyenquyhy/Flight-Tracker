@@ -363,6 +363,8 @@ namespace FlightTracker.Web.Data
             StatusLanding = data.StatusLanding;
 
             State = data.State;
+
+            FlightPlan = data.FlightPlan;
         }
     }
 }
