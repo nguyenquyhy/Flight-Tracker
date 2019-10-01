@@ -11,8 +11,7 @@ namespace FlightTracker.Web.Hubs
     {
         public string Id { get; set; }
         public bool IsWeb { get; set; }
-        public AircraftData AircraftData { get; set; }
-        public FlightPlan FlightPlan { get; set; }
+        public FlightData FlightData { get; set; }
         public FlightStatus FlightStatus { get; set; }
     }
 
@@ -20,49 +19,54 @@ namespace FlightTracker.Web.Hubs
     {
         private static ConcurrentDictionary<string, ConnectionInfo> connections = new ConcurrentDictionary<string, ConnectionInfo>();
 
-        public override async Task OnConnectedAsync()
+        public override Task OnConnectedAsync()
         {
             var id = this.Context.ConnectionId;
             connections.TryAdd(id, new ConnectionInfo { Id = id });
 
-            await base.OnConnectedAsync();
+            return base.OnConnectedAsync();
         }
 
-        public override async Task OnDisconnectedAsync(Exception exception)
+        public override Task OnDisconnectedAsync(Exception exception)
         {
             connections.TryRemove(this.Context.ConnectionId, out _);
-
-            await base.OnDisconnectedAsync(exception);
+            return base.OnDisconnectedAsync(exception);
         }
 
-        public async Task Ping()
+        public Task List()
         {
             if (connections.TryGetValue(this.Context.ConnectionId, out var connectionInfo))
             {
                 connectionInfo.IsWeb = true;
             }
-            await Clients.Caller.SendAsync("List", connections.ToDictionary(o => o.Key, o => o.Value));
+            return Clients.Caller.SendAsync("List", connections.ToDictionary(o => o.Key, o => o.Value));
         }
 
-        public async Task Set(AircraftData data)
+        public Task Set(FlightData data)
         {
             if (connections.TryGetValue(this.Context.ConnectionId, out var connectionInfo))
             {
-                connectionInfo.AircraftData = data;
+                connectionInfo.FlightData = data;
 
-                await Clients.Clients(connections.Where(o => o.Value.IsWeb).Select(o => o.Key).ToList())
-                    .SendAsync("List", connections.ToDictionary(o => o.Key, o => o.Value));
+                var webClients = connections.Where(o => o.Value.IsWeb).Select(o => o.Key).ToList();
+
+                return Task.WhenAll(
+                    Clients.All.SendAsync("Update", this.Context.ConnectionId, null),
+                    Clients.Clients(webClients).SendAsync("List", connections.ToDictionary(o => o.Key, o => o.Value))
+                    );
             }
+            return Task.CompletedTask;
         }
 
-        public async Task Update(FlightStatus flightInfo)
+        public Task Update(FlightStatus flightInfo)
         {
             if (connections.TryGetValue(this.Context.ConnectionId, out var connectionInfo))
             {
                 connectionInfo.FlightStatus = flightInfo;
 
-                await Clients.All.SendAsync("Update", this.Context.ConnectionId, flightInfo);
+                return Clients.All.SendAsync("Update", this.Context.ConnectionId, flightInfo);
             }
+            return Task.CompletedTask;
         }
     }
 }

@@ -15,9 +15,8 @@ namespace FlightTracker.Clients.Logics
 
         public SignalRLogic(ILogger<SignalRLogic> logger,
             IOptions<AppSettings> settings,
-            IAircraftDataUpdater aircraftDataUpdater,
-            IFlightPlanUpdater flightPlanUpdater,
-            IFlightStatusUpdater flightStatusUpdater)
+            IFlightSimInterface flightSimInterface,
+            FlightLogic flightLogic)
         {
             connection = new HubConnectionBuilder()
                 .WithUrl(settings.Value.BaseUrl + "/Hubs/Status")
@@ -25,38 +24,46 @@ namespace FlightTracker.Clients.Logics
                 .Build();
             this.logger = logger;
 
-            aircraftDataUpdater.AircraftDataUpdated += AircraftDataUpdater_AircraftDataUpdated;
-            flightPlanUpdater.FlightPlanUpdated += FlightPlanUpdater_FlightPlanUpdated;
-            flightStatusUpdater.FlightStatusUpdated += FlightStatusUpdater_FlightStatusUpdated;
+            flightSimInterface.Closed += FlightSimInterface_Closed;
+            flightSimInterface.FlightStatusUpdated += FlightSimInterface_FlightStatusUpdated;
+            flightLogic.FlightUpdated += FlightLogic_FlightUpdated;
+
+            Task.Factory.StartNew(PeriodicSendAsync);
         }
 
-        private async void AircraftDataUpdater_AircraftDataUpdated(object sender, AircraftDataUpdatedEventArgs e)
+        private void FlightLogic_FlightUpdated(object sender, FlightUpdatedEventArgs e)
         {
-            try
-            {
-                if (connection.State == HubConnectionState.Connected)
-                    await connection.InvokeAsync("Set", e.Data);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Cannot send to SignalR!");
-            }
+            updatedFlight = e.FlightData;
         }
 
-        private async void FlightPlanUpdater_FlightPlanUpdated(object sender, FlightPlanUpdatedEventArgs e)
+        private FlightData updatedFlight = null;
+        private async Task PeriodicSendAsync()
         {
-            try
+            while (true)
             {
-                if (connection.State == HubConnectionState.Connected)
-                    await connection.InvokeAsync("FlightPlan", e.FlightPlan);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Cannot send to SignalR!");
+                if (updatedFlight != null && connection.State == HubConnectionState.Connected)
+                {
+                    try
+                    {
+                        await connection.InvokeAsync("Set", updatedFlight);
+                        updatedFlight = null;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Cannot send to SignalR!");
+                    }
+                }
+                await Task.Delay(5000);
             }
         }
 
-        private async void FlightStatusUpdater_FlightStatusUpdated(object sender, FlightStatusUpdatedEventArgs e)
+        private async void FlightSimInterface_Closed(object sender, EventArgs e)
+        {
+            await connection.InvokeAsync("Set", null);
+            updatedFlight = null;
+        }
+
+        private async void FlightSimInterface_FlightStatusUpdated(object sender, FlightStatusUpdatedEventArgs e)
         {
             if (lastStatus != null)
             {

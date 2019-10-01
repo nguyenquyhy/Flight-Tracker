@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace FlightTracker.Clients.Logics
 {
-    public class SimConnectLogic : IAircraftDataUpdater, IFlightStatusUpdater, IFlightPlanUpdater, IAirportUpdater, IEnvironmentDataUpdater
+    public class SimConnectLogic : IFlightSimInterface
     {
         private const int StatusDelayMilliseconds = 500;
 
@@ -498,6 +498,8 @@ namespace FlightTracker.Clients.Logics
                 case (int)DATA_REQUESTS.FLIGHT_PLAN:
                     if (!string.IsNullOrEmpty(data.szString))
                     {
+                        logger.LogInformation($"Receive flight plan {data.szString}");
+
                         var planName = data.szString;
                         var parser = new FlightPlanParser();
                         var plan = await parser.ParseAsync(planName);

@@ -69,11 +69,7 @@ namespace FlightTracker.Clients.WpfApp
             services.AddSingleton<FlightInfoViewModel>();
             services.AddSingleton<SignalRLogic>();
             services.AddSingleton<SimConnectLogic>();
-            services.AddSingleton<IEnvironmentDataUpdater>(provider => provider.GetRequiredService<SimConnectLogic>());
-            services.AddSingleton<IAirportUpdater>(provider => provider.GetRequiredService<SimConnectLogic>());
-            services.AddSingleton<IAircraftDataUpdater>(provider => provider.GetRequiredService<SimConnectLogic>());
-            services.AddSingleton<IFlightPlanUpdater>(provider => provider.GetRequiredService<SimConnectLogic>());
-            services.AddSingleton<IFlightStatusUpdater>(provider => provider.GetRequiredService<SimConnectLogic>());
+            services.AddSingleton<IFlightSimInterface>(provider => provider.GetRequiredService<SimConnectLogic>());
             services.AddSingleton<FlightsAPIClient>();
             services.AddSingleton<FlightLogic>();
             services.AddSingleton<IImageUploader, AzureImageUploader>();

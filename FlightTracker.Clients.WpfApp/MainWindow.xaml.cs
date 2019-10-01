@@ -12,7 +12,7 @@ namespace FlightTracker.Clients.WpfApp
         private readonly SignalRLogic signalR;
         private readonly FlightLogic flightLogic;
         private readonly TestLogic testLogic;
-        private readonly IFlightStatusUpdater flightStatusUpdater;
+        private readonly IFlightSimInterface flightSimInterface;
         private readonly FlightInfoViewModel viewModel;
         private FileSystemWatcher watcher;
 
@@ -21,21 +21,19 @@ namespace FlightTracker.Clients.WpfApp
             SignalRLogic signalR,
             FlightLogic flightLogic,
             TestLogic testLogic,
-            IAircraftDataUpdater aircraftDataUpdater,
-            IFlightPlanUpdater flightPlanUpdater,
-            IFlightStatusUpdater flightStatusUpdater)
+            IFlightSimInterface flightSimInterface)
         {
             InitializeComponent();
             this.viewModel = viewModel;
             this.signalR = signalR;
             this.flightLogic = flightLogic;
             this.testLogic = testLogic;
-            this.flightStatusUpdater = flightStatusUpdater;
+            this.flightSimInterface = flightSimInterface;
             DataContext = viewModel;
 
-            aircraftDataUpdater.AircraftDataUpdated += AircraftDataUpdater_AircraftDataUpdated;
-            flightPlanUpdater.FlightPlanUpdated += FlightPlanUpdater_FlightPlanUpdated;
-            flightStatusUpdater.FlightStatusUpdated += FlightStatusUpdater_FlightStatusUpdated;
+            flightSimInterface.AircraftDataUpdated += FlightSimInterface_AircraftDataUpdated;
+            flightSimInterface.FlightPlanUpdated += FlightSimInterface_FlightPlanUpdated;
+            flightSimInterface.FlightStatusUpdated += FlightStatusUpdater_FlightStatusUpdated;
 
             var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "Prepar3D v4 Files");
 
@@ -87,12 +85,12 @@ namespace FlightTracker.Clients.WpfApp
             }
         }
 
-        private void AircraftDataUpdater_AircraftDataUpdated(object sender, AircraftDataUpdatedEventArgs e)
+        private void FlightSimInterface_AircraftDataUpdated(object sender, AircraftDataUpdatedEventArgs e)
         {
             viewModel.Update(e.Data);
         }
 
-        private void FlightPlanUpdater_FlightPlanUpdated(object sender, FlightPlanUpdatedEventArgs e)
+        private void FlightSimInterface_FlightPlanUpdated(object sender, FlightPlanUpdatedEventArgs e)
         {
             viewModel.Update(e.FlightPlan);
         }
@@ -104,18 +102,18 @@ namespace FlightTracker.Clients.WpfApp
 
         private void ButtonScreenshot_Click(object sender, RoutedEventArgs e)
         {
-            flightStatusUpdater.Screenshot();
+            flightSimInterface.Screenshot();
         }
 
         private async void Watcher_Created(object sender, FileSystemEventArgs e)
         {
             await Task.Delay(1000).ConfigureAwait(false);
-            await flightLogic.ScreenshotAsync(Path.GetFileName(e.FullPath), File.ReadAllBytes(e.FullPath)).ConfigureAwait(false);
+            await flightLogic.ScreenshotAsync(Path.GetFileName(e.FullPath), File.ReadAllBytes(e.FullPath)).ConfigureAwait(true);
         }
 
         private async void ButtonSave_Click(object sender, RoutedEventArgs e)
         {
-            await flightLogic.SaveAsync();
+            await flightLogic.SaveAsync().ConfigureAwait(true);
         }
 
         private async void ButtonSaveAndNew_Click(object sender, RoutedEventArgs e)
@@ -138,12 +136,12 @@ namespace FlightTracker.Clients.WpfApp
 
         private async void ButtonTestStorage_Click(object sender, RoutedEventArgs e)
         {
-            await testLogic.TestImageUploader();
+            await testLogic.TestImageUploader().ConfigureAwait(true);
         }
 
         private async void ButtonDumpFlight_Click(object sender, RoutedEventArgs e)
         {
-            await flightLogic.DumpAsync();
+            await flightLogic.DumpAsync().ConfigureAwait(true);
         }
     }
 }

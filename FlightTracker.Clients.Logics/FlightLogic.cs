@@ -12,6 +12,16 @@ using System.Threading.Tasks;
 
 namespace FlightTracker.Clients.Logics
 {
+    public class FlightUpdatedEventArgs : EventArgs
+    {
+        public FlightUpdatedEventArgs(FlightData flightData)
+        {
+            FlightData = flightData;
+        }
+
+        public FlightData FlightData { get; }
+    }
+
     public class FlightLogic
     {
         private const int SaveDelay = 5000;
@@ -32,27 +42,25 @@ namespace FlightTracker.Clients.Logics
 
         DateTime? lastSaveAttempt = null;
 
+        public event EventHandler<FlightUpdatedEventArgs> FlightUpdated;
+
         public FlightLogic(ILogger<FlightLogic> logger,
             FlightsAPIClient flightsAPIClient,
-            IEnvironmentDataUpdater environmentDataUpdater,
-            IAirportUpdater airportUpdater,
-            IAircraftDataUpdater aircraftDataUpdater,
-            IFlightPlanUpdater flightPlanUpdater,
-            IFlightStatusUpdater flightStatusUpdater,
+            IFlightSimInterface flightSimInterface,
             IImageUploader imageUploader)
         {
             this.logger = logger;
             this.flightsAPIClient = flightsAPIClient;
             this.imageUploader = imageUploader;
-            environmentDataUpdater.EnvironmentDataUpdated += EnvironmentDataUpdater_EnvironmentDataUpdated;
-            airportUpdater.AirportListUpdated += AirportUpdater_AirportListUpdated;
-            aircraftDataUpdater.AircraftDataUpdated += AircraftDataUpdater_AircraftDataUpdated;
-            flightPlanUpdater.FlightPlanUpdated += FlightPlanUpdater_FlightPlanUpdated;
+            flightSimInterface.EnvironmentDataUpdated += FlightSimInterface_EnvironmentDataUpdated;
+            flightSimInterface.AirportListUpdated += FlightSimInterface_AirportListUpdated;
+            flightSimInterface.AircraftDataUpdated += FlightSimInterface_AircraftDataUpdated;
+            flightSimInterface.FlightPlanUpdated += FlightSimInterface_FlightPlanUpdated;
 
-            flightStatusUpdater.FlightStatusUpdated += FlightStatusUpdater_FlightStatusUpdated;
-            flightStatusUpdater.Crashed += FlightStatusUpdater_CrashedAsync;
-            flightStatusUpdater.CrashReset += FlightStatusUpdater_CrashReset;
-            flightStatusUpdater.Closed += FlightStatusUpdater_Closed;
+            flightSimInterface.FlightStatusUpdated += FlightSimInterface_FlightStatusUpdated;
+            flightSimInterface.Crashed += FlightSimInterface_CrashedAsync;
+            flightSimInterface.CrashReset += FlightSimInterface_CrashReset;
+            flightSimInterface.Closed += FlightSimInterface_Closed;
         }
 
         public async Task DumpAsync()
@@ -109,6 +117,14 @@ namespace FlightTracker.Clients.Logics
                 FlightNumber = flightData?.Aircraft?.FlightNumber
             };
             flightRoute = new List<FlightStatus>();
+            HandleFlightDataUpdated();
+        }
+
+        private bool updated;
+        private void HandleFlightDataUpdated()
+        {
+            updated = true;
+            FlightUpdated?.Invoke(this, new FlightUpdatedEventArgs(flightData));
         }
 
         public async Task ScreenshotAsync(string name, byte[] image)
@@ -131,16 +147,17 @@ namespace FlightTracker.Clients.Logics
         public void UpdateTitle(string title)
         {
             flightData.Title = title;
+            HandleFlightDataUpdated();
         }
 
-        private void EnvironmentDataUpdater_EnvironmentDataUpdated(object sender, EnvironmentDataUpdatedEventArgs e)
+        private void FlightSimInterface_EnvironmentDataUpdated(object sender, EnvironmentDataUpdatedEventArgs e)
         {
             localTime = e.LocalTime;
             zuluTime = e.ZuluTime;
             absoluteTime = e.AbsoluteTime;
         }
 
-        private void AirportUpdater_AirportListUpdated(object sender, AirportListUpdatedEventArgs e)
+        private void FlightSimInterface_AirportListUpdated(object sender, AirportListUpdatedEventArgs e)
         {
             logger.LogInformation("Receive Airport: " + string.Join(", ", e.Airports.Select(o => o.Icao)));
             foreach (var airport in e.Airports)
@@ -152,17 +169,19 @@ namespace FlightTracker.Clients.Logics
             }
         }
 
-        private void AircraftDataUpdater_AircraftDataUpdated(object sender, AircraftDataUpdatedEventArgs e)
+        private void FlightSimInterface_AircraftDataUpdated(object sender, AircraftDataUpdatedEventArgs e)
         {
             flightData.Aircraft = e.Data;
+            HandleFlightDataUpdated();
         }
 
-        private void FlightPlanUpdater_FlightPlanUpdated(object sender, FlightPlanUpdatedEventArgs e)
+        private void FlightSimInterface_FlightPlanUpdated(object sender, FlightPlanUpdatedEventArgs e)
         {
             flightData.FlightPlan = e.FlightPlan;
+            HandleFlightDataUpdated();
         }
 
-        private async void FlightStatusUpdater_FlightStatusUpdated(object sender, FlightStatusUpdatedEventArgs e)
+        private async void FlightSimInterface_FlightStatusUpdated(object sender, FlightStatusUpdatedEventArgs e)
         {
             // Augment environment time
             e.FlightStatus.LocalTime = localTime;
@@ -186,6 +205,8 @@ namespace FlightTracker.Clients.Logics
                     flightData.AirportFrom = GetNearestAirport(e);
                 }
 
+                HandleFlightDataUpdated();
+
                 await AddOrUpdateFlightAsync();
             }
             else if (lastStatus != null && !lastStatus.IsOnGround && e.FlightStatus.IsOnGround && flightData.StatusLanding == null)
@@ -201,6 +222,8 @@ namespace FlightTracker.Clients.Logics
                     {
                         flightData.AirportTo = GetNearestAirport(e);
                     }
+
+                    HandleFlightDataUpdated();
                 }
 
                 await AddOrUpdateFlightAsync();
@@ -211,6 +234,7 @@ namespace FlightTracker.Clients.Logics
                 {
                     // Flight start when the airplane is already flying
                     flightData.State = FlightState.Enroute;
+                    HandleFlightDataUpdated();
                 }
 
                 // Try to reduce the number of status
@@ -240,19 +264,21 @@ namespace FlightTracker.Clients.Logics
             }
         }
 
-        private async void FlightStatusUpdater_CrashedAsync(object sender, EventArgs e)
+        private async void FlightSimInterface_CrashedAsync(object sender, EventArgs e)
         {
             if (flightData != null)
             {
                 logger.LogInformation("Aircraft has crashed");
                 flightData.State = FlightState.Crashed;
                 flightData.AirportTo = null;
+                
+                HandleFlightDataUpdated();
 
                 await NewFlightAsync(NewFlightReason.Crashed, flightData.Title);
             }
         }
 
-        private void FlightStatusUpdater_CrashReset(object sender, EventArgs e)
+        private void FlightSimInterface_CrashReset(object sender, EventArgs e)
         {
             if (tcsCrashReset != null)
             {
@@ -260,7 +286,7 @@ namespace FlightTracker.Clients.Logics
             }
         }
 
-        private async void FlightStatusUpdater_Closed(object sender, EventArgs e)
+        private async void FlightSimInterface_Closed(object sender, EventArgs e)
         {
             if (flightData != null)
             {
@@ -268,6 +294,8 @@ namespace FlightTracker.Clients.Logics
                 {
                     logger.LogInformation("Set flight status to lost");
                     flightData.State = FlightState.Lost;
+
+                    HandleFlightDataUpdated();
                 }
                 await NewFlightAsync(NewFlightReason.Closed, flightData.Title);
             }
@@ -305,6 +333,7 @@ namespace FlightTracker.Clients.Logics
                     newData.FlightPlan = flightData.FlightPlan;
 
                     flightData = newData;
+                    HandleFlightDataUpdated();
 
                     if (flightRoute.Any())
                     {
@@ -313,7 +342,10 @@ namespace FlightTracker.Clients.Logics
                 }
                 else
                 {
-                    await flightsAPIClient.UpdateFlightAsync(flightData.Id, flightData);
+                    if (updated)
+                    {
+                        await flightsAPIClient.UpdateFlightAsync(flightData.Id, flightData);
+                    }
                     if (flightRoute.Any())
                     {
                         await flightsAPIClient.PostRouteAsync(flightData.Id, flightRoute);

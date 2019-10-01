@@ -37,8 +37,7 @@ export interface FlightData {
 
 export interface ClientData {
     isWeb: boolean;
-    aircraft: AircraftData;
-    flightPlan?: FlightPlan;
+    flightData?: FlightData;
     flightStatus?: FlightStatus;
 }
 

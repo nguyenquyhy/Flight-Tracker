@@ -4,6 +4,7 @@ using System;
 
 namespace FlightTracker.DTOs
 {
+    [System.Diagnostics.DebuggerDisplay("{Title}")]
     public class InputFlightData
     {
         public InputFlightData() { }
