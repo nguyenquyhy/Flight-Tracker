@@ -19,14 +19,14 @@ namespace FlightTracker.Web
             FieldAsync<ListGraphType<StringGraphType>>("pictureUrls",
                 arguments: new QueryArguments
                 {
-                    new QueryArgument(typeof(IntGraphType)) { Name = "limit" }
+                    new QueryArgument(typeof(IntGraphType)) { Name = "random" }
                 },
                 resolve: async context =>
                 {
                     var list = await flightStorage.GetAircraftPictureUrlsAsync(context.Source.TailNumber);
-                    if (context.Arguments.TryGetValue("limit", out var limitObj) && limitObj is int limit)
+                    if (context.Arguments.TryGetValue<int>("random", out var random))
                     {
-                        list = list.TakeLast(limit).ToList();
+                        list = list.Shuffle().Take(random).ToList();
                     }
                     return list;
                 });

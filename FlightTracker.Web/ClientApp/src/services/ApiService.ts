@@ -165,7 +165,7 @@ export default class ApiService {
         title
         model
         type
-        pictureUrls(limit: 7)
+        pictureUrls(random: 7)
     }
 }`
 
