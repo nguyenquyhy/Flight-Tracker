@@ -32,6 +32,8 @@ export interface FlightData {
 
     route?: FlightStatus[];
 
+    videoUrl?: string;
+
     state: string;
 }
 

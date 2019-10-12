@@ -98,6 +98,9 @@ namespace FlightTracker.Web.Data
                 var flight = flights[id];
                 if (data.Title != null) flight.Title = data.Title;
                 if (data.Description != null) flight.Description = data.Description;
+                if (data.Airline != null) flight.Airline = data.Airline;
+                if (data.FlightNumber != null) flight.FlightNumber = data.FlightNumber;
+                if (data.VideoUrl != null) flight.VideoUrl = data.VideoUrl;
 
                 await SaveAsync(flights).ConfigureAwait(false);
 
@@ -365,6 +368,8 @@ namespace FlightTracker.Web.Data
             State = data.State;
 
             FlightPlan = data.FlightPlan;
+
+            VideoUrl = data.VideoUrl;
         }
     }
 }

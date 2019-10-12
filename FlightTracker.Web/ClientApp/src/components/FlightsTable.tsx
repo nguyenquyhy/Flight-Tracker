@@ -24,6 +24,7 @@ export default class FlightsTable extends Component<Props> {
                             <tr>
                                 <th>Date</th>
                                 <th>Time</th>
+                                <th>Number</th>
                                 <th>Flight</th>
                                 <th>Depart</th>
                                 <th>Arrive</th>
@@ -140,6 +141,7 @@ class Row extends Component<RowProps, RowState> {
         return <StyledRow state={flight.state}>
             <td><Link to={`flights/${flight.id}`}>{new Date(flight.startDateTime).toLocaleDateString()}</Link></td>
             <td><Link to={`flights/${flight.id}`}>{this.renderTime(flight)}</Link></td>
+            <td><Link to={`flights/${flight.id}`}>{flight.flightNumber}</Link></td>
             <td><Link to={`flights/${flight.id}`}>{flight.title || 'Unnamed'}</Link></td>
             <td><Link to={`flights/${flight.id}`}>{flight.airportFrom}</Link></td>
             <td><Link to={`flights/${flight.id}`}>{flight.airportTo}</Link></td>

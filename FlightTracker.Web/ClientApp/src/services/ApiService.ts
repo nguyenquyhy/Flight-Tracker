@@ -10,6 +10,7 @@ title
 description
 startDateTime
 endDateTime
+airline
 flightNumber
 airportFrom
 airportTo
@@ -29,6 +30,7 @@ statusLanding {
     indicatedAirSpeed
     verticalSpeed
 }
+videoUrl
 state`
 
 export default class ApiService {
@@ -42,6 +44,7 @@ export default class ApiService {
     flights(last: $last) {
         id
         startDateTime
+        flightNumber
         title
         airportFrom
         airportTo

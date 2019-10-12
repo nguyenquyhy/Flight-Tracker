@@ -7,6 +7,7 @@ import { Scatter } from 'react-chartjs-2';
 import GooglePageWrapper from "./hoc/GooglePageWrapper";
 import { FlightData, FlightStatus } from "../services/Models";
 import { ServicesContext, ConfigsContext } from "../Context";
+import Youtube from "./Youtube";
 
 interface State {
     loading: boolean;
@@ -63,6 +64,30 @@ class Flight extends Component<Props, State> {
         this.setState({ flight: flight });
     }
 
+    async handleSaveAirline(value: string) {
+        const flight = await this.context.api.patchFlight(this.props.match.params.id, {
+            airline: value
+        });
+
+        this.setState({ flight: flight });
+    }
+
+    async handleSaveFlightNumber(value: string) {
+        const flight = await this.context.api.patchFlight(this.props.match.params.id, {
+            flightNumber: value
+        });
+
+        this.setState({ flight: flight });
+    }
+
+    async handleSaveVideoUrl(value: string) {
+        const flight = await this.context.api.patchFlight(this.props.match.params.id, {
+            videoUrl: value
+        });
+
+        this.setState({ flight: flight });
+    }
+
     public render() {
         if (this.state.loading) return <p><em>Loading...</em></p>;
 
@@ -96,6 +121,8 @@ class Flight extends Component<Props, State> {
             ]
         }
 
+        const contentWidth = window.innerWidth - 44;
+
         return <ConfigsContext.Consumer>
             {context => {
                 const flight = this.state.flight;
@@ -124,7 +151,8 @@ class Flight extends Component<Props, State> {
                         <tbody>
                             <tr><td>Airports</td><td>{flight.airportFrom || '?'} - {flight.airportTo || '?'}</td></tr>
                             {flight.aircraft && <tr><td>Aircraft</td><td>{flight.aircraft.title}</td></tr>}
-                            <tr><td>Flight Number</td><td>{flight.airline} {flight.flightNumber}</td></tr>
+                            <tr><td>Airline</td><td><TextInput value={flight.airline} title='Airline' disabled={!canEdit} onSave={value => this.handleSaveAirline(value)} /></td></tr>
+                            <tr><td>Flight Number</td><td><TextInput value={flight.flightNumber} title='Flight Number' disabled={!canEdit} onSave={value => this.handleSaveFlightNumber(value)} /></td></tr>
                             <tr><td>State</td><td>{flight.state}</td></tr>
                             <tr><td>Local Time</td><td>{startDateTime.toLocaleDateString()} {startDateTime.toLocaleTimeString()} {duration}</td></tr>
                             {flight.statusTakeOff && flight.statusLanding ?
@@ -143,6 +171,12 @@ class Flight extends Component<Props, State> {
                                     <tr><td>Landing IAS</td><td>{flight.statusLanding.indicatedAirSpeed}</td></tr>
                                     <tr><td>Landing VS</td><td>{flight.statusLanding.verticalSpeed}</td></tr>
                                 </>
+                            }
+                            {canEdit &&
+                                <tr>
+                                    <td>Video URL</td>
+                                    <td><TextInput disabled={!canEdit} title='Video URL' value={flight.videoUrl || ''} onSave={value => this.handleSaveVideoUrl(value)} /></td>
+                                </tr>
                             }
                         </tbody>
                     </table>
@@ -222,6 +256,8 @@ class Flight extends Component<Props, State> {
                             ))}
                         </Slider>
                     </div>
+
+                    {flight.videoUrl && <Youtube url={flight.videoUrl} width={Math.min(contentWidth, 560 * 2)} height={Math.min(contentWidth / 560 * 315, 315 * 2)} />}
                 </>
             }}
         </ConfigsContext.Consumer>
@@ -444,7 +480,8 @@ export default GooglePageWrapper(Flight);
 
 enum TextInputType {
     Title,
-    TextArea
+    TextArea,
+    TextBox
 }
 
 interface TextInputState {
@@ -458,7 +495,7 @@ interface TextInputProps {
     title: string;
     value: string;
     onSave: (value: string) => void;
-    type: TextInputType;
+    type?: TextInputType;
     disabled?: boolean;
 }
 
@@ -505,6 +542,22 @@ class TextInput extends Component<TextInputProps, TextInputState> {
                 }
                 return <div style={{ marginBottom: 10 }}>
                     <textarea value={this.state.value} placeholder={'Enter ' + this.props.title} className="form-control" onChange={e => this.setState({ value: e.target.value, editing: true })} />
+                    <div>
+                        <button className="btn btn-sm btn-primary" onClick={e => this.handleSave()}>Save</button>
+                        <button className="btn btn-sm btn-warning" onClick={e => this.handleCancel()}>Cancel</button>
+                    </div>
+                </div>
+            case undefined:
+            case TextInputType.TextBox:
+                if (this.props.disabled)
+                    return <span>{this.props.value}</span>;
+                if (!this.state.editing) {
+                    if (!this.state.value)
+                        return <span onClick={() => this.setState({ editing: true })}><em>Click to enter {this.props.title}</em></span>;
+                    return <span onClick={() => this.setState({ editing: true })}>{this.props.value}</span>;
+                }
+                return <div style={{ marginBottom: 10 }}>
+                    <input value={this.state.value} placeholder={'Enter ' + this.props.title} className="form-control" onChange={e => this.setState({ value: e.target.value, editing: true })} />
                     <div>
                         <button className="btn btn-sm btn-primary" onClick={e => this.handleSave()}>Save</button>
                         <button className="btn btn-sm btn-warning" onClick={e => this.handleCancel()}>Cancel</button>

@@ -32,6 +32,8 @@ namespace FlightTracker.Web
             Field(o => o.State, type: typeof(NonNullGraphType<FlightStateGraphType>));
 
             Field(o => o.FlightPlan, type: typeof(FlightPlanInput));
+
+            Field(o => o.VideoUrl, nullable: true);
         }
     }
 }

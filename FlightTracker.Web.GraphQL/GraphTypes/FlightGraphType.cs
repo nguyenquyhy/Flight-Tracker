@@ -17,6 +17,7 @@ namespace FlightTracker.Web
             Field(o => o.StartDateTime);
             Field(o => o.EndDateTime, nullable: true);
 
+            Field(o => o.Airline, nullable: true);
             Field(o => o.FlightNumber, nullable: true);
 
             Field(o => o.Aircraft, type: typeof(AircraftGraphType));
@@ -33,6 +34,8 @@ namespace FlightTracker.Web
             Field(o => o.State, type: typeof(FlightStateGraphType));
 
             Field(o => o.FlightPlan, type: typeof(FlightPlanGraphType));
+
+            Field(o => o.VideoUrl, nullable: true);
 
             FieldAsync<ListGraphType<FlightStatusGraphType>>("route",
                 arguments: new QueryArguments(

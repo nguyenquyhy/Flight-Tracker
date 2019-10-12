@@ -41,6 +41,8 @@ namespace FlightTracker.DTOs
         public FlightState State { get; set; } = FlightState.Started;
 
         public FlightPlan FlightPlan { get; set; }
+
+        public string VideoUrl { get; set; }
     }
 
     public class FlightData : InputFlightData
