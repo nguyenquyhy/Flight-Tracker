@@ -94,7 +94,7 @@ class Flight extends Component<Props, State> {
         const pictureUrls = this.state.statuses ? this.state.statuses.filter(o => !!o.screenshotUrl).map(o => o.screenshotUrl || '') : [];
 
         const sliderProperties = {
-            slidesToShow: 4,
+            slidesToShow: Math.min(pictureUrls.length, 4),
             slidesToScroll: 1,
             arrows: true,
             dots: true,
@@ -103,19 +103,19 @@ class Flight extends Component<Props, State> {
                 {
                     breakpoint: 1904,
                     settings: {
-                        slidesToShow: 3
+                        slidesToShow: Math.min(pictureUrls.length, 3)
                     }
                 },
                 {
                     breakpoint: 1280,
                     settings: {
-                        slidesToShow: 2
+                        slidesToShow: Math.min(pictureUrls.length, 2)
                     }
                 },
                 {
                     breakpoint: 612,
                     settings: {
-                        slidesToShow: 1
+                        slidesToShow: Math.min(pictureUrls.length, 1)
                     }
                 }
             ]
