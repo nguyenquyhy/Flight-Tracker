@@ -6,19 +6,19 @@ namespace FlightTracker.Web.Data
 {
     public interface IFlightStorage
     {
-        Task<IEnumerable<FlightData>> GetAllAsync();
-        Task<FlightData> GetAsync(string id);
-        Task<FlightData> AddAsync(FlightData data);
-        Task<FlightData> UpdateAsync(string id, FlightData data);
+        Task<IEnumerable<FlightData>> GetFlightsAsync();
+        Task<FlightData> GetFlightAsync(string id);
+        Task<FlightData> AddFlightAsync(FlightData data);
+        Task<FlightData> InsertOrUpdateFlightAsync(string id, FlightData data);
         Task<FlightData> PatchAsync(string id, FlightData data);
-        Task<bool> DeleteAsync(string id);
+        Task<bool> DeleteFlightAsync(string id);
 
-        IAsyncEnumerable<AircraftData> GetAllAircraftsAsync();
+        IAsyncEnumerable<AircraftData> GetAircraftsAsync();
         Task<AircraftData> GetAircraftAsync(string tailNumber);
 
         Task<List<string>> GetAircraftPictureUrlsAsync(string tailNumber);
 
         Task<IEnumerable<FlightStatus>> GetRouteAsync(string id);
-        Task<IEnumerable<FlightStatus>> UpdateRouteAsync(string id, List<FlightStatus> route);
+        Task UpdateRouteAsync(string id, List<FlightStatus> route);
     }
 }

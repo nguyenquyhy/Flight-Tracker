@@ -12,13 +12,13 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text.Json.Serialization;
 
 namespace FlightTracker.Web
@@ -41,11 +41,23 @@ namespace FlightTracker.Web
 
             services.Configure<AppSettings>(appSettings => Configuration.GetSection("AppSettings").Bind(appSettings));
 
-            services.AddSingleton<IFlightStorage>(new JsonFileFlightStorage(Path.Combine(Directory.GetCurrentDirectory(), "flights.json")));
+            services.AddSingleton<IIdProvider, GuidIdProvider>();
+            //services.AddSingleton<IFlightStorage>(provider => new JsonFileFlightStorage(provider.GetService<IIdProvider>(), Path.Combine(Directory.GetCurrentDirectory(), "flights.json")));
+
+            services.AddDbContext<SqliteDbContext>(options => options.UseSqlite("Data Source=flights.db"));
+            services.AddScoped<IFlightStorage, SqliteFlightStorage>();
+
+            foreach (var type in typeof(RootSchema).Assembly.GetTypes())
+            {
+                if (typeof(GraphQL.Types.GraphType).IsAssignableFrom(type))
+                {
+                    services.AddScoped(type);
+                }
+            }
 
             services
                 .AddGraphQL()
-                .AddGraphTypes(typeof(RootSchema).Assembly)
+                //.AddGraphTypes(typeof(RootSchema).Assembly)
                 .AddDataLoader()
                 .AddWebSockets()
                 .AddUserContextBuilder(context =>
@@ -61,7 +73,7 @@ namespace FlightTracker.Web
                 .AddTransient<IValidationRule, GraphQL.Server.Authorization.AspNetCore.AuthorizationValidationRule>();
 
             services
-                .AddSingleton(s => new RootSchema(new FuncServiceProvider(t => s.GetRequiredService(t))));
+                .AddScoped(s => new RootSchema(new FuncServiceProvider(t => s.GetRequiredService(t))));
 
             services.AddControllersWithViews().AddJsonOptions(configuration =>
             {

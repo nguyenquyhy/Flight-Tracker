@@ -10,7 +10,5 @@ namespace FlightTracker.DTOs
         public string TailNumber { get; set; }
         public string Airline { get; set; }
         public string FlightNumber { get; set; }
-
-        public List<string> PictureUrls { get; set; }
     }
 }

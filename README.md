@@ -7,6 +7,7 @@ This project allows you to record your flight in your own personal cloud storage
 - [X] Live status
 - [X] Store flight paths
   - [X] JSON file
+  - [X] SQLite
   - [ ] MongoDB
 - [X] Store screenshots
   - [X] Azure

@@ -53,14 +53,14 @@ namespace FlightTracker.Web
         private async Task<object> ResolveAddFlight(ResolveFieldContext<object> context)
         {
             var flightInput = context.GetArgument<FlightData>("flight");
-            return await flightStorage.AddAsync(flightInput);
+            return await flightStorage.AddFlightAsync(flightInput);
         }
 
         private async Task<object> ResolveUpdateFlight(ResolveFieldContext<object> context)
         {
             var id = context.GetArgument<string>("id");
             var flightInput = context.GetArgument<FlightData>("flight");
-            return await flightStorage.UpdateAsync(id, flightInput);
+            return await flightStorage.InsertOrUpdateFlightAsync(id, flightInput);
         }
 
         private async Task<object> ResolvePatchFlight(ResolveFieldContext<object> context)
@@ -88,7 +88,7 @@ namespace FlightTracker.Web
                     route.AddRange(routeInput.Where(o => o.SimTime > lastTime));
                 }
                 await flightStorage.UpdateRouteAsync(id, route);
-                return await flightStorage.GetAsync(id);
+                return await flightStorage.GetFlightAsync(id);
             }
             return null;
         }
@@ -96,7 +96,7 @@ namespace FlightTracker.Web
         private async Task<object> ResolveDeleteFlight(ResolveFieldContext<object> context)
         {
             var id = context.GetArgument<string>("id");
-            return await flightStorage.DeleteAsync(id);
+            return await flightStorage.DeleteFlightAsync(id);
         }
     }
 }

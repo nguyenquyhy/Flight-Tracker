@@ -13,25 +13,26 @@ namespace FlightTracker.Web.Data
     public class JsonFileFlightStorage : JsonFileFlightStorageBase, IFlightStorage
     {
         private static readonly SemaphoreSlim flightsSm = new SemaphoreSlim(1);
+        private readonly IIdProvider idProvider;
 
-        public JsonFileFlightStorage(string filePath) : base(filePath)
+        public JsonFileFlightStorage(IIdProvider idProvider, string filePath) : base(filePath)
         {
-
+            this.idProvider = idProvider;
         }
 
-        public async Task<IEnumerable<FlightData>> GetAllAsync()
+        public async Task<IEnumerable<FlightData>> GetFlightsAsync()
         {
             var flights = await LoadAsync().ConfigureAwait(false);
             return flights.Select(o => o.Value);
         }
 
-        public async Task<FlightData> GetAsync(string id)
+        public async Task<FlightData> GetFlightAsync(string id)
         {
             var flights = await LoadAsync().ConfigureAwait(false);
             return flights[id];
         }
 
-        public async Task<FlightData> AddAsync(FlightData data)
+        public async Task<FlightData> AddFlightAsync(FlightData data)
         {
             try
             {
@@ -40,7 +41,7 @@ namespace FlightTracker.Web.Data
                 var flights = await LoadAsync().ConfigureAwait(false);
                 var flight = new FlightWrapper(data)
                 {
-                    Id = Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture),
+                    Id = await idProvider.GenerateAsync().ConfigureAwait(false),
                     AddedDateTime = DateTimeOffset.UtcNow
                 };
                 flights.Add(flight.Id, flight);
@@ -53,7 +54,7 @@ namespace FlightTracker.Web.Data
             }
         }
 
-        public async Task<FlightData> UpdateAsync(string id, FlightData data)
+        public async Task<FlightData> InsertOrUpdateFlightAsync(string id, FlightData data)
         {
             if (data == null) throw new ArgumentNullException(nameof(data));
 
@@ -64,7 +65,7 @@ namespace FlightTracker.Web.Data
                 var flights = await LoadAsync().ConfigureAwait(false);
                 if (flights.TryGetValue(id, out var flight))
                 {
-                    flight.Update(data);
+                    flight.CopyFrom(data);
                 }
                 else
                 {
@@ -112,7 +113,7 @@ namespace FlightTracker.Web.Data
             }
         }
 
-        public async Task<bool> DeleteAsync(string id)
+        public async Task<bool> DeleteFlightAsync(string id)
         {
             try
             {
@@ -149,7 +150,7 @@ namespace FlightTracker.Web.Data
             }
         }
 
-        public async Task<IEnumerable<FlightStatus>> UpdateRouteAsync(string id, List<FlightStatus> route)
+        public async Task UpdateRouteAsync(string id, List<FlightStatus> route)
         {
             try
             {
@@ -159,8 +160,6 @@ namespace FlightTracker.Web.Data
                 var flight = flights[id];
                 flight.Statuses = route;
                 await SaveAsync(flights).ConfigureAwait(false);
-
-                return flight.Statuses;
             }
             finally
             {
@@ -168,7 +167,7 @@ namespace FlightTracker.Web.Data
             }
         }
 
-        public async IAsyncEnumerable<AircraftData> GetAllAircraftsAsync()
+        public async IAsyncEnumerable<AircraftData> GetAircraftsAsync()
         {
             var flights = await LoadAsync().ConfigureAwait(false);
             var groups = flights
@@ -179,7 +178,6 @@ namespace FlightTracker.Web.Data
             foreach (var group in groups)
             {
                 var aircraft = group.First().Aircraft;
-                aircraft.PictureUrls = group.Where(o => o.Statuses != null).SelectMany(o => o.Statuses.Where(s => !string.IsNullOrEmpty(s.ScreenshotUrl))).Select(o => o.ScreenshotUrl).TakeLast(5).ToList();
                 yield return aircraft;
             }
         }
@@ -191,7 +189,6 @@ namespace FlightTracker.Web.Data
                 .Select(o => o.Value)
                 .Where(o => tailNumber.Equals(o.Aircraft?.TailNumber, StringComparison.InvariantCultureIgnoreCase));
             var aircraft = flightsWithAircraft.First().Aircraft;
-            aircraft.PictureUrls = flightsWithAircraft.Where(o => o.Statuses != null).SelectMany(o => o.Statuses.Where(s => !string.IsNullOrEmpty(s.ScreenshotUrl))).Select(o => o.ScreenshotUrl).ToList();
             return aircraft;
         }
 
@@ -266,110 +263,5 @@ namespace FlightTracker.Web.Data
             }
         }
 
-    }
-
-    public class FlightWrapper : FlightData
-    {
-        public FlightWrapper() { }
-        public FlightWrapper(FlightData data)
-        {
-            if (data == null) throw new ArgumentNullException(nameof(data));
-
-            Id = data.Id;
-            Title = data.Title;
-            Description = data.Description;
-
-            AddedDateTime = data.AddedDateTime;
-
-            StartDateTime = data.StartDateTime;
-            EndDateTime = data.EndDateTime;
-
-            TakeOffDateTime = data.TakeOffDateTime;
-            LandingDateTime = data.LandingDateTime;
-
-            Airline = data.Airline;
-            FlightNumber = data.FlightNumber;
-            AirportFrom = data.AirportFrom;
-            AirportTo = data.AirportTo;
-
-            Aircraft = data.Aircraft;
-
-            FuelUsed = data.FuelUsed;
-            DistanceFlown = data.DistanceFlown;
-
-            StatusTakeOff = data.StatusTakeOff;
-            StatusLanding = data.StatusLanding;
-
-            State = data.State;
-        }
-
-        public List<FlightStatus> Statuses { get; set; } = new List<FlightStatus>();
-
-        public FlightData ToDTO()
-        {
-            return new FlightData
-            {
-                Id = Id,
-                Title = Title,
-                Description = Description,
-
-                AddedDateTime = AddedDateTime,
-
-                StartDateTime = StartDateTime,
-                EndDateTime = EndDateTime,
-
-                TakeOffDateTime = TakeOffDateTime,
-                LandingDateTime = LandingDateTime,
-
-                Airline = Airline,
-                FlightNumber = FlightNumber,
-                AirportFrom = AirportFrom,
-                AirportTo = AirportTo,
-
-                Aircraft = Aircraft,
-
-                FuelUsed = FuelUsed,
-                DistanceFlown = DistanceFlown,
-
-                StatusTakeOff = StatusTakeOff,
-                StatusLanding = StatusLanding,
-
-                State = State
-            };
-        }
-
-        internal void Update(FlightData data)
-        {
-            if (Id != data.Id) throw new InvalidOperationException($"Cannot update Id!");
-            Title = data.Title;
-            Description = data.Description;
-
-            AddedDateTime = data.AddedDateTime;
-
-            StartDateTime = data.StartDateTime;
-            EndDateTime = data.EndDateTime;
-
-            TakeOffDateTime = data.TakeOffDateTime;
-            LandingDateTime = data.LandingDateTime;
-
-            Airline = data.Airline;
-            FlightNumber = data.FlightNumber;
-            AirportFrom = data.AirportFrom;
-            AirportTo = data.AirportTo;
-
-            Aircraft = data.Aircraft;
-
-            FuelUsed = data.FuelUsed;
-            DistanceFlown = data.DistanceFlown;
-
-            StatusTakeOff = data.StatusTakeOff;
-            StatusLanding = data.StatusLanding;
-
-            State = data.State;
-
-            FlightPlan = data.FlightPlan;
-
-            VideoUrl = data.VideoUrl;
-        }
     }
 }

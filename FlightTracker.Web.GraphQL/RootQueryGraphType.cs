@@ -17,7 +17,7 @@ namespace FlightTracker.Web
                 ),
                 resolve: async context =>
                 {
-                    var data = await flightStorage.GetAllAsync();
+                    var data = await flightStorage.GetFlightsAsync();
 
                     if (context.Arguments.TryGetValue<int>("last", out var last))
                     {
@@ -36,7 +36,7 @@ namespace FlightTracker.Web
                  resolve: async context =>
                  {
                      var id = context.GetArgument<string>("id");
-                     return await flightStorage.GetAsync(id);
+                     return await flightStorage.GetFlightAsync(id);
                  }
                  );
 
@@ -46,7 +46,7 @@ namespace FlightTracker.Web
                 resolve: async context =>
                 {
                     var result = new List<AircraftData>();
-                    await foreach (var aircraft in flightStorage.GetAllAircraftsAsync())
+                    await foreach (var aircraft in flightStorage.GetAircraftsAsync())
                     {
                         result.Add(aircraft);
                     }

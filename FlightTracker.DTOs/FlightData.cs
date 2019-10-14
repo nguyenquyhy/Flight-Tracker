@@ -53,6 +53,40 @@ namespace FlightTracker.DTOs
 
         public int? FuelUsed { get; set; }
         public int? DistanceFlown { get; set; }
+
+        public void CopyFrom(FlightData data)
+        {
+            if (Id != data.Id) throw new InvalidOperationException($"Cannot update Id!");
+            Title = data.Title;
+            Description = data.Description;
+
+            AddedDateTime = data.AddedDateTime;
+
+            StartDateTime = data.StartDateTime;
+            EndDateTime = data.EndDateTime;
+
+            TakeOffDateTime = data.TakeOffDateTime;
+            LandingDateTime = data.LandingDateTime;
+
+            Airline = data.Airline;
+            FlightNumber = data.FlightNumber;
+            AirportFrom = data.AirportFrom;
+            AirportTo = data.AirportTo;
+
+            Aircraft = data.Aircraft;
+
+            FuelUsed = data.FuelUsed;
+            DistanceFlown = data.DistanceFlown;
+
+            StatusTakeOff = data.StatusTakeOff;
+            StatusLanding = data.StatusLanding;
+
+            State = data.State;
+
+            FlightPlan = data.FlightPlan;
+
+            VideoUrl = data.VideoUrl;
+        }
     }
 
     public enum FlightState

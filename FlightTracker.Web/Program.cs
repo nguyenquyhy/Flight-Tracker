@@ -1,5 +1,7 @@
+using FlightTracker.Web.Data;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FlightTracker.Web
 {
@@ -7,7 +9,13 @@ namespace FlightTracker.Web
     {
         public static void Main(string[] args)
         {
-            CreateWebHostBuilder(args).Build().Run();
+            var host = CreateWebHostBuilder(args).Build();
+            using (var serviceScope = host.Services.CreateScope())
+            {
+                var context = serviceScope.ServiceProvider.GetRequiredService<SqliteDbContext>();
+                context.Database.EnsureCreated();
+            }
+            host.Run();
         }
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
