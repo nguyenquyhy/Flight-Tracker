@@ -75,6 +75,12 @@ namespace FlightTracker.Web.Data
             else
             {
                 flight.CopyFrom(data);
+                // NOTE: work around for adding Owned entity
+                dbContext.Entry(flight).State = EntityState.Modified;
+                if (flight.StatusTakeOff != null && dbContext.Entry(flight.StatusTakeOff).State == EntityState.Added)
+                    dbContext.Entry(flight.StatusTakeOff).State = EntityState.Modified;
+                if (flight.StatusLanding != null && dbContext.Entry(flight.StatusLanding).State == EntityState.Added)
+                    dbContext.Entry(flight.StatusLanding).State = EntityState.Modified;
             }
 
             await dbContext.SaveChangesAsync().ConfigureAwait(false);
