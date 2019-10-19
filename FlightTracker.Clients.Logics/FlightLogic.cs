@@ -183,84 +183,91 @@ namespace FlightTracker.Clients.Logics
 
         private async void FlightSimInterface_FlightStatusUpdated(object sender, FlightStatusUpdatedEventArgs e)
         {
-            // Augment environment time
-            e.FlightStatus.LocalTime = localTime;
-            e.FlightStatus.ZuluTime = zuluTime;
-            e.FlightStatus.AbsoluteTime = absoluteTime;
-
-            var lastStatus = flightRoute.LastOrDefault();
-
-            if (lastStatus != null && lastStatus.IsOnGround && !e.FlightStatus.IsOnGround && flightData.State == FlightState.Started)
+            try
             {
-                // Took off
-                logger.LogInformation("Aircraft has taken off");
-                flightData.StatusTakeOff = e.FlightStatus;
-                flightData.State = FlightState.Enroute;
+                // Augment environment time
+                e.FlightStatus.LocalTime = localTime;
+                e.FlightStatus.ZuluTime = zuluTime;
+                e.FlightStatus.AbsoluteTime = absoluteTime;
 
-                flightData.TakeOffDateTime = DateTimeOffset.Now;
+                var lastStatus = flightRoute.LastOrDefault();
 
-                // Try to determine airport
-                if (airports != null && flightData.AirportFrom == null)
+                if (lastStatus != null && lastStatus.IsOnGround && !e.FlightStatus.IsOnGround && flightData.State == FlightState.Started)
                 {
-                    flightData.AirportFrom = GetNearestAirport(e);
-                }
+                    // Took off
+                    logger.LogInformation("Aircraft has taken off");
+                    flightData.StatusTakeOff = e.FlightStatus;
+                    flightData.State = FlightState.Enroute;
 
-                HandleFlightDataUpdated();
+                    flightData.TakeOffDateTime = DateTimeOffset.Now;
 
-                await AddOrUpdateFlightAsync();
-            }
-            else if (lastStatus != null && !lastStatus.IsOnGround && e.FlightStatus.IsOnGround && flightData.StatusLanding == null)
-            {
-                // Landing
-                if (flightData.State == FlightState.Enroute)
-                {
-                    logger.LogInformation("Aircraft has landed");
-                    flightData.StatusLanding = lastStatus;
-                    flightData.State = FlightState.Arrived;
-
-                    if (airports != null && flightData.AirportTo == null)
+                    // Try to determine airport
+                    if (airports != null && flightData.AirportFrom == null)
                     {
-                        flightData.AirportTo = GetNearestAirport(e);
+                        flightData.AirportFrom = GetNearestAirport(e);
                     }
 
                     HandleFlightDataUpdated();
-                }
 
-                await AddOrUpdateFlightAsync();
-            }
-            else
-            {
-                if (!e.FlightStatus.IsOnGround && flightData.State == FlightState.Started && e.FlightStatus.GroundSpeed > 5)
+                    await AddOrUpdateFlightAsync();
+                }
+                else if (lastStatus != null && !lastStatus.IsOnGround && e.FlightStatus.IsOnGround && flightData.StatusLanding == null)
                 {
-                    // Flight start when the airplane is already flying
-                    flightData.State = FlightState.Enroute;
-                    HandleFlightDataUpdated();
+                    // Landing
+                    if (flightData.State == FlightState.Enroute)
+                    {
+                        logger.LogInformation("Aircraft has landed");
+                        flightData.StatusLanding = lastStatus;
+                        flightData.State = FlightState.Arrived;
+
+                        if (airports != null && flightData.AirportTo == null)
+                        {
+                            flightData.AirportTo = GetNearestAirport(e);
+                        }
+
+                        HandleFlightDataUpdated();
+                    }
+
+                    await AddOrUpdateFlightAsync();
+                }
+                else
+                {
+                    if (!e.FlightStatus.IsOnGround && flightData.State == FlightState.Started && e.FlightStatus.GroundSpeed > 5)
+                    {
+                        // Flight start when the airplane is already flying
+                        flightData.State = FlightState.Enroute;
+                        HandleFlightDataUpdated();
+                    }
+
+                    // Try to reduce the number of status
+                    if (lastStatus == null && e.FlightStatus.IsOnGround && e.FlightStatus.GroundSpeed < 1f)
+                        return;
+                    else if (lastStatus != null && lastStatus.ScreenshotUrl == null)
+                    {
+                        if (e.FlightStatus.AltitudeAboveGround > 1000 && e.FlightStatus.SimTime - lastStatus.SimTime < 1f)
+                            return;
+                        if (e.FlightStatus.AltitudeAboveGround > 5000 && e.FlightStatus.SimTime - lastStatus.SimTime < 2f)
+                            return;
+                        if (e.FlightStatus.AltitudeAboveGround > 10000 && e.FlightStatus.SimTime - lastStatus.SimTime < 3f)
+                            return;
+                        if (e.FlightStatus.AltitudeAboveGround > 15000 && e.FlightStatus.SimTime - lastStatus.SimTime < 4f)
+                            return;
+                        if (e.FlightStatus.AltitudeAboveGround > 20000 && e.FlightStatus.SimTime - lastStatus.SimTime < 5f)
+                            return;
+                    }
                 }
 
-                // Try to reduce the number of status
-                if (lastStatus == null && e.FlightStatus.IsOnGround && e.FlightStatus.GroundSpeed < 1f)
-                    return;
-                else if (lastStatus != null && lastStatus.ScreenshotUrl == null)
+                flightRoute.Add(e.FlightStatus);
+
+                if ((flightData.State == FlightState.Enroute || flightData.State == FlightState.Arrived)
+                    && (!lastSaveAttempt.HasValue || DateTime.Now - lastSaveAttempt.Value > TimeSpan.FromMilliseconds(SaveDelay)))
                 {
-                    if (e.FlightStatus.AltitudeAboveGround > 1000 && e.FlightStatus.SimTime - lastStatus.SimTime < 1f)
-                        return;
-                    if (e.FlightStatus.AltitudeAboveGround > 5000 && e.FlightStatus.SimTime - lastStatus.SimTime < 2f)
-                        return;
-                    if (e.FlightStatus.AltitudeAboveGround > 10000 && e.FlightStatus.SimTime - lastStatus.SimTime < 3f)
-                        return;
-                    if (e.FlightStatus.AltitudeAboveGround > 15000 && e.FlightStatus.SimTime - lastStatus.SimTime < 4f)
-                        return;
-                    if (e.FlightStatus.AltitudeAboveGround > 20000 && e.FlightStatus.SimTime - lastStatus.SimTime < 5f)
-                        return;
+                    await AddOrUpdateFlightAsync();
                 }
             }
-
-            flightRoute.Add(e.FlightStatus);
-
-            if ((flightData.State == FlightState.Enroute || flightData.State == FlightState.Arrived)
-                && (!lastSaveAttempt.HasValue || DateTime.Now - lastSaveAttempt.Value > TimeSpan.FromMilliseconds(SaveDelay)))
+            catch (Exception ex)
             {
-                await AddOrUpdateFlightAsync();
+                logger.LogError(ex, "Cannot process flight status update: {0}", ex.Message);
             }
         }
 
