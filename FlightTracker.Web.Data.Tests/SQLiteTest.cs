@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading.Tasks;
 
@@ -31,9 +32,12 @@ namespace FlightTracker.Web.Data.Tests
                 Title = "Test 1"
             };
 
+            var loggerFactory = LoggerFactory.Create(builder => builder.SetMinimumLevel(LogLevel.Debug));
+            var logger = loggerFactory.CreateLogger<SqliteFlightStorage>();
+
             using (var dbContext = new SqliteDbContext(options))
             {
-                var storage = new SqliteFlightStorage(dbContext, idProvider);
+                var storage = new SqliteFlightStorage(dbContext, idProvider, logger);
 
                 flight = await storage.AddFlightAsync(flight);
 
@@ -53,7 +57,7 @@ namespace FlightTracker.Web.Data.Tests
 
             using (var dbContext = new SqliteDbContext(options))
             {
-                var storage = new SqliteFlightStorage(dbContext, idProvider);
+                var storage = new SqliteFlightStorage(dbContext, idProvider, logger);
 
                 var flight2 = await storage.GetFlightAsync(flight.Id);
 
@@ -87,9 +91,12 @@ namespace FlightTracker.Web.Data.Tests
                 Title = "Test 1"
             };
 
+            var loggerFactory = LoggerFactory.Create(builder => builder.SetMinimumLevel(LogLevel.Debug));
+            var logger = loggerFactory.CreateLogger<SqliteFlightStorage>();
+
             using (var dbContext = new SqliteDbContext(options))
             {
-                var storage = new SqliteFlightStorage(dbContext, idProvider);
+                var storage = new SqliteFlightStorage(dbContext, idProvider, logger);
 
                 flight = await storage.AddFlightAsync(flight);
 
@@ -110,7 +117,7 @@ namespace FlightTracker.Web.Data.Tests
 
             using (var dbContext = new SqliteDbContext(options))
             {
-                var storage = new SqliteFlightStorage(dbContext, idProvider);
+                var storage = new SqliteFlightStorage(dbContext, idProvider, logger);
 
                 var flight2 = await storage.GetFlightAsync(flight.Id);
 
@@ -148,11 +155,14 @@ namespace FlightTracker.Web.Data.Tests
                     SimTime = 1000,
                     Altitude = 0.5
                 }
-            };
+            }; 
+            
+            var loggerFactory = LoggerFactory.Create(builder => builder.SetMinimumLevel(LogLevel.Debug));
+            var logger = loggerFactory.CreateLogger<SqliteFlightStorage>();
 
             using (var dbContext = new SqliteDbContext(options))
             {
-                var storage = new SqliteFlightStorage(dbContext, idProvider);
+                var storage = new SqliteFlightStorage(dbContext, idProvider, logger);
 
                 flight = await storage.AddFlightAsync(flight);
 
@@ -163,7 +173,7 @@ namespace FlightTracker.Web.Data.Tests
 
             using (var dbContext = new SqliteDbContext(options))
             {
-                var storage = new SqliteFlightStorage(dbContext, idProvider);
+                var storage = new SqliteFlightStorage(dbContext, idProvider, logger);
 
                 var flight2 = await storage.GetFlightAsync(flight.Id);
 

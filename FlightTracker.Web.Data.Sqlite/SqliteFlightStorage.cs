@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using FlightTracker.DTOs;
 using FlightTracker.Web.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace FlightTracker.Web.Data
 {
@@ -12,17 +14,20 @@ namespace FlightTracker.Web.Data
     {
         private readonly SqliteDbContext dbContext;
         private readonly IIdProvider idProvider;
+        private readonly ILogger<SqliteFlightStorage> logger;
 
-        public SqliteFlightStorage(SqliteDbContext dbContext, IIdProvider idProvider)
+        public SqliteFlightStorage(SqliteDbContext dbContext, IIdProvider idProvider, ILogger<SqliteFlightStorage> logger)
         {
             this.dbContext = dbContext;
             this.idProvider = idProvider;
+            this.logger = logger;
         }
 
         public Task<IEnumerable<FlightData>> GetFlightsAsync()
         {
             return Task.FromResult(dbContext.Flights.AsEnumerable());
         }
+
         public async Task<FlightData> GetFlightAsync(string id)
         {
             return await dbContext.Flights.FindAsync(id).ConfigureAwait(false);
@@ -71,6 +76,8 @@ namespace FlightTracker.Web.Data
                 dbContext.Add(data);
 
                 flight = data;
+
+                logger.LogDebug("Flight is inserted.");
             }
             else
             {
@@ -81,6 +88,8 @@ namespace FlightTracker.Web.Data
                     dbContext.Entry(flight.StatusTakeOff).State = EntityState.Modified;
                 if (flight.StatusLanding != null && dbContext.Entry(flight.StatusLanding).State == EntityState.Added)
                     dbContext.Entry(flight.StatusLanding).State = EntityState.Modified;
+
+                logger.LogDebug("Flight is updated.");
             }
 
             await dbContext.SaveChangesAsync().ConfigureAwait(false);
@@ -105,19 +114,36 @@ namespace FlightTracker.Web.Data
             return route.Select(o => o.ToDTO());
         }
 
+        private static SemaphoreSlim sm = new SemaphoreSlim(1);
+
         public async Task UpdateRouteAsync(string id, List<FlightStatus> route)
         {
-            var last = await dbContext.FlightStatuses
-                .Where(o => o.FlightId == id)
-                .Select(o => o.SimTime)
-                .Cast<double?>()
-                .MaxAsync().ConfigureAwait(false) ?? 0;
-
-            foreach (var status in route.OrderBy(o => o.SimTime).Where(o => o.SimTime > last))
+            try
             {
-                dbContext.FlightStatuses.Add(new FlightStatusWrapper(id, status));
+                await sm.WaitAsync().ConfigureAwait(false);
+                logger.LogDebug("Start updating route");
+
+                var last = await dbContext.FlightStatuses
+                    .Where(o => o.FlightId == id)
+                    .Select(o => o.SimTime)
+                    .Cast<double?>()
+                    .MaxAsync().ConfigureAwait(false) ?? 0;
+
+                foreach (var status in route.OrderBy(o => o.SimTime).Where(o => o.SimTime > last))
+                {
+                    if (status.SimTime > last)
+                    {
+                        last = status.SimTime;
+                        dbContext.FlightStatuses.Add(new FlightStatusWrapper(id, status));
+                    }
+                }
+                await dbContext.SaveChangesAsync().ConfigureAwait(false);
+                logger.LogDebug("Finish updating route");
             }
-            await dbContext.SaveChangesAsync().ConfigureAwait(false);
+            finally
+            {
+                sm.Release();
+            }
         }
 
         public async IAsyncEnumerable<AircraftData> GetAircraftsAsync()
