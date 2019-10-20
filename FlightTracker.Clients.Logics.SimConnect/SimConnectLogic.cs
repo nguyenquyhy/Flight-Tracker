@@ -435,8 +435,6 @@ namespace FlightTracker.Clients.Logics
                             };
 
                             AircraftDataUpdated?.Invoke(this, new AircraftDataUpdatedEventArgs(dto));
-
-                            simconnect?.RequestDataOnSimObjectType(DATA_REQUESTS.FLIGHT_STATUS, DEFINITIONS.FlightStatus, 0, SIMCONNECT_SIMOBJECT_TYPE.USER);
                         }
                         else
                         {
@@ -602,6 +600,7 @@ namespace FlightTracker.Clients.Logics
             {
                 case EVENTS.AIRCRAFT_LOADED:
                     logger.LogInformation("Aircraft loaded");
+                    simconnect.RequestDataOnSimObjectType(DATA_REQUESTS.AIRCRAFT_DATA, DEFINITIONS.PlaneData, 0, SIMCONNECT_SIMOBJECT_TYPE.USER);
                     break;
                 case EVENTS.FLIGHT_LOADED:
                     {
@@ -623,7 +622,8 @@ namespace FlightTracker.Clients.Logics
             simconnect.RequestDataOnSimObject(DATA_REQUESTS.ENVIRONMENT_DATA, DEFINITIONS.EnvironmentData, 0, SIMCONNECT_PERIOD.SECOND, SIMCONNECT_DATA_REQUEST_FLAG.DEFAULT, 0, 0, 0);
 
             simconnect.SubscribeToFacilities(SIMCONNECT_FACILITY_LIST_TYPE.AIRPORT, DATA_REQUESTS.SUBSCRIBE_GENERIC);
-            //simconnect.RequestFacilitiesList(SIMCONNECT_FACILITY_LIST_TYPE.AIRPORT, DATA_REQUESTS.NONE);
+
+            simconnect.RequestDataOnSimObjectType(DATA_REQUESTS.FLIGHT_STATUS, DEFINITIONS.FlightStatus, 0, SIMCONNECT_SIMOBJECT_TYPE.USER);
         }
 
         // The case where the user closes Prepar3D

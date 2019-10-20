@@ -169,10 +169,19 @@ namespace FlightTracker.Clients.Logics
             }
         }
 
-        private void FlightSimInterface_AircraftDataUpdated(object sender, AircraftDataUpdatedEventArgs e)
+        private async void FlightSimInterface_AircraftDataUpdated(object sender, AircraftDataUpdatedEventArgs e)
         {
-            flightData.Aircraft = e.Data;
-            HandleFlightDataUpdated();
+            if (flightData.State == FlightState.Started)
+            {
+                flightData.Aircraft = e.Data;
+                HandleFlightDataUpdated();
+            }
+            else
+            {
+                await NewFlightAsync(NewFlightReason.UserRequest, flightData.Title);
+                flightData.Aircraft = e.Data;
+                HandleFlightDataUpdated();
+            }
         }
 
         private void FlightSimInterface_FlightPlanUpdated(object sender, FlightPlanUpdatedEventArgs e)
