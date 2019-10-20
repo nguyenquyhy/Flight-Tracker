@@ -6,15 +6,18 @@ import "simple-lightbox/dist/simpleLightbox.css";
 import Slider from 'react-slick';
 import { Scatter } from 'react-chartjs-2';
 import GooglePageWrapper from "./hoc/GooglePageWrapper";
-import { FlightData, FlightStatus } from "../services/Models";
+import { FlightData, FlightStatus, AircraftData } from "../services/Models";
 import { ServicesContext, ConfigsContext } from "../Context";
 import Youtube from "./Youtube";
+import AircraftSelector from "./AircraftSelector";
 
 interface State {
     loading: boolean;
     deleting: boolean;
     flight: FlightData | null;
     statuses: FlightStatus[] | null;
+
+    isSelectingAircraft: boolean;
 }
 
 interface RouteProps {
@@ -33,7 +36,7 @@ class Flight extends Component<Props, State> {
 
     constructor(props) {
         super(props);
-        this.state = { flight: null, statuses: null, loading: true, deleting: false };
+        this.state = { flight: null, statuses: null, loading: true, deleting: false, isSelectingAircraft: false };
     }
 
     componentDidMount() {
@@ -60,6 +63,21 @@ class Flight extends Component<Props, State> {
     async handleSaveDescription(value: string) {
         const flight = await this.context.api.patchFlight(this.props.match.params.id, {
             description: value
+        });
+
+        this.setState({ flight: flight });
+    }
+
+    async handleSaveAircraft(value: AircraftData) {
+        this.setState({ isSelectingAircraft: false });
+
+        const aircraft = {
+            ...value
+        }
+        delete (aircraft.pictureUrls);
+
+        const flight = await this.context.api.patchFlight(this.props.match.params.id, {
+            aircraft: aircraft
         });
 
         this.setState({ flight: flight });
@@ -151,7 +169,10 @@ class Flight extends Component<Props, State> {
                         </thead>
                         <tbody>
                             <tr><td>Airports</td><td>{flight.airportFrom || '?'} - {flight.airportTo || '?'}</td></tr>
-                            {flight.aircraft && <tr><td>Aircraft</td><td>{flight.aircraft.title}</td></tr>}
+                            {flight.aircraft &&
+                                <tr><td>Aircraft</td><td><div onClick={() => canEdit && this.setState({ isSelectingAircraft: true })}>{flight.aircraft.title}</div></td></tr>
+
+                            }
                             <tr><td>Airline</td><td><TextInput value={flight.airline} title='Airline' disabled={!canEdit} onSave={value => this.handleSaveAirline(value)} /></td></tr>
                             <tr><td>Flight Number</td><td><TextInput value={flight.flightNumber} title='Flight Number' disabled={!canEdit} onSave={value => this.handleSaveFlightNumber(value)} /></td></tr>
                             <tr><td>State</td><td>{flight.state}</td></tr>
@@ -249,9 +270,9 @@ class Flight extends Component<Props, State> {
                         </div>
                     }
 
-                    <div style={{ overflowX: 'hidden', overflowY: 'visible', height: 360, marginTop: 10 }}>
+                    {pictureUrls && !!pictureUrls.length && <div style={{ overflowX: 'hidden', overflowY: 'visible', height: 360, marginTop: 10 }}>
                         <Slider {...sliderProperties}>
-                            {pictureUrls && pictureUrls.map(pictureUrl => (
+                            {pictureUrls.map(pictureUrl => (
                                 <div key={pictureUrl}>
                                     <img src={pictureUrl} height="320" onClick={() => SimpleLightBox.open({
                                         items: pictureUrls,
@@ -260,7 +281,9 @@ class Flight extends Component<Props, State> {
                                 </div>
                             ))}
                         </Slider>
-                    </div>
+                    </div>}
+
+                    <AircraftSelector isOpen={this.state.isSelectingAircraft} selected={flight.aircraft} onSelected={aircraft => this.handleSaveAircraft(aircraft)} />
                 </>
             }}
         </ConfigsContext.Consumer>

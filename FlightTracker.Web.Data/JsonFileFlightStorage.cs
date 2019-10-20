@@ -99,6 +99,7 @@ namespace FlightTracker.Web.Data
                 var flight = flights[id];
                 if (data.Title != null) flight.Title = data.Title;
                 if (data.Description != null) flight.Description = data.Description;
+                if (data.Aircraft != null) flight.Aircraft = data.Aircraft;
                 if (data.Airline != null) flight.Airline = data.Airline;
                 if (data.FlightNumber != null) flight.FlightNumber = data.FlightNumber;
                 if (data.VideoUrl != null) flight.VideoUrl = data.VideoUrl;

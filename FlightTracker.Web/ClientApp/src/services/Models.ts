@@ -18,7 +18,7 @@ export interface FlightData {
     airportFrom: string;
     airportTo: string;
 
-    aircraft?: AircraftData;
+    aircraft: AircraftData;
     flightPlan?: FlightPlan;
 
     startDateTime: string;

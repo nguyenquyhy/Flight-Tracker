@@ -12,6 +12,8 @@ namespace FlightTracker.Web
 
             Field(o => o.EndDateTime, nullable: true);
 
+            Field(o => o.Aircraft, type: typeof(AircraftInput));
+
             Field(o => o.Airline, nullable: true);
             Field(o => o.FlightNumber, nullable: true);
 

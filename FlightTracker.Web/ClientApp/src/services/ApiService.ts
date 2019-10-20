@@ -15,6 +15,7 @@ flightNumber
 airportFrom
 airportTo
 aircraft {
+    tailNumber
     title
 }
 statusTakeOff {
@@ -170,6 +171,22 @@ export default class ApiService {
         model
         type
         pictureUrls(random: 7)
+    }
+}`
+
+        const data = await this.graphQLquery(query);
+        return data.aircrafts as AircraftData[];
+    }
+
+    async getAircraftSelections() {
+        const query = `{
+    aircrafts {
+        tailNumber
+        title
+        model
+        type
+        airline
+        flightNumber
     }
 }`
 
