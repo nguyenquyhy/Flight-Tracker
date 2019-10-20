@@ -137,12 +137,14 @@ class Row extends Component<RowProps, RowState> {
     }
 
     public render() {
+        const videoIcon = <StyledIcon xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke="#d6c86b"><path d="M22 1v2h-2v-2h-2v4h-12v-4h-2v2h-2v-2h-2v22h2v-2h2v2h2v-4h12v4h2v-2h2v2h2v-22h-2zm-18 18h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2v-2h2v2zm14 9h-12v-8h12v8zm4 3h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2v-2h2v2z" /></StyledIcon>;
+
         const flight = this.props.flight;
         return <StyledRow state={flight.state}>
             <td><Link to={`flights/${flight.id}`}>{new Date(flight.startDateTime).toLocaleDateString()}</Link></td>
             <td><Link to={`flights/${flight.id}`}>{this.renderTime(flight)}</Link></td>
             <td><Link to={`flights/${flight.id}`}>{flight.flightNumber}</Link></td>
-            <td><Link to={`flights/${flight.id}`}>{flight.title || 'Unnamed'}</Link></td>
+            <td><Link to={`flights/${flight.id}`}>{!!flight.videoUrl && videoIcon}{flight.title || 'Unnamed'}</Link></td>
             <td><Link to={`flights/${flight.id}`}>{flight.airportFrom}</Link></td>
             <td><Link to={`flights/${flight.id}`}>{flight.airportTo}</Link></td>
             <td><Link to={`flights/${flight.id}`}>{flight.aircraft ? flight.aircraft.title : ''}</Link></td>
@@ -153,6 +155,11 @@ class Row extends Component<RowProps, RowState> {
         </StyledRow>
     }
 }
+
+const StyledIcon = styled.svg`
+margin-right: 8px;
+margin-top: -2px;
+`
 
 const Red = styled.span`color: red`
 

@@ -19,9 +19,11 @@ namespace FlightTracker.Web
                 {
                     var data = await flightStorage.GetFlightsAsync();
 
+                    data = data.OrderByDescending(a => a.AddedDateTime);
+
                     if (context.Arguments.TryGetValue<int>("last", out var last))
                     {
-                        data = data.OrderByDescending(a => a.AddedDateTime).Take(last);
+                        data = data.Take(last);
                     }
 
                     return data;

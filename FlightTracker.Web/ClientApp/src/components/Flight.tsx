@@ -1,5 +1,6 @@
 ﻿import React, { Component } from "react";
 import { RouteComponentProps } from "react-router";
+import styled from "styled-components";
 import SimpleLightBox from "simple-lightbox";
 import "simple-lightbox/dist/simpleLightbox.css";
 import Slider from 'react-slick';
@@ -142,7 +143,7 @@ class Flight extends Component<Props, State> {
 
                     <TextInput type={TextInputType.TextArea} title='Description' disabled={!canEdit} value={flight.description || ''} onSave={value => this.handleSaveDescription(value)} />
 
-                    <table className="table table-strip">
+                    <StyledTable className="table table-strip">
                         <thead>
                             <tr>
                                 <th>Information</th><th>Value</th>
@@ -179,7 +180,11 @@ class Flight extends Component<Props, State> {
                                 </tr>
                             }
                         </tbody>
-                    </table>
+                    </StyledTable>
+
+                    {flight.videoUrl && <StyledVideoWrapper><Youtube url={flight.videoUrl} width={Math.min(contentWidth, 560 * 2)} height={Math.min(contentWidth / 560 * 315, 315 * 2)} /></StyledVideoWrapper>}
+
+                    <div style={{ clear: 'both' }}></div>
                     <p><em>*Blue: on the ground. Purple: autopilot off. Green: autopilot on</em></p>
 
                     <div id="map" style={{ width: '100%', height: 800 }}></div>
@@ -256,8 +261,6 @@ class Flight extends Component<Props, State> {
                             ))}
                         </Slider>
                     </div>
-
-                    {flight.videoUrl && <Youtube url={flight.videoUrl} width={Math.min(contentWidth, 560 * 2)} height={Math.min(contentWidth / 560 * 315, 315 * 2)} />}
                 </>
             }}
         </ConfigsContext.Consumer>
@@ -450,6 +453,15 @@ class Flight extends Component<Props, State> {
         return ('0' + num).slice(-2);
     }
 }
+
+const StyledTable = styled.table`
+max-width: 700px;
+float: left;
+`
+
+const StyledVideoWrapper = styled.div`
+float: right;
+`
 
 export const statusToColor = (status: FlightStatus) => {
     if (status.isOnGround) return '#0000FF';

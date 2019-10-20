@@ -61,6 +61,7 @@ export default class ApiService {
             localTime
         }
         state
+        videoUrl
     }
 }`
 
