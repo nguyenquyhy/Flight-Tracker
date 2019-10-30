@@ -1,4 +1,6 @@
 ﻿using FlightTracker.Clients.Logics;
+using Microsoft.Extensions.Logging;
+using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
 using System.Globalization;
 using System.IO;
@@ -9,37 +11,44 @@ namespace FlightTracker.Clients.WpfApp
 {
     public partial class MainWindow : Window
     {
+        private readonly FlightInfoViewModel viewModel;
         private readonly SignalRLogic signalR;
         private readonly FlightLogic flightLogic;
         private readonly TestLogic testLogic;
         private readonly IFlightSimInterface flightSimInterface;
-        private readonly FlightInfoViewModel viewModel;
-        private FileSystemWatcher watcher;
+        private readonly FileWatcherLogic watcher;
+        private readonly IStorageLogic storageLogic;
+        private readonly ILogger<MainWindow> logger;
 
         public MainWindow(
             FlightInfoViewModel viewModel,
             SignalRLogic signalR,
             FlightLogic flightLogic,
             TestLogic testLogic,
-            IFlightSimInterface flightSimInterface)
+            IFlightSimInterface flightSimInterface,
+            FileWatcherLogic watcher,
+            IStorageLogic storageLogic,
+            ILogger<MainWindow> logger)
         {
             InitializeComponent();
+
             this.viewModel = viewModel;
             this.signalR = signalR;
             this.flightLogic = flightLogic;
             this.testLogic = testLogic;
-            this.flightSimInterface = flightSimInterface;
+            this.flightSimInterface = flightSimInterface ?? throw new ArgumentNullException(nameof(flightSimInterface));
+            this.watcher = watcher ?? throw new ArgumentNullException(nameof(watcher));
+            this.storageLogic = storageLogic ?? throw new ArgumentNullException(nameof(storageLogic));
+            this.logger = logger;
             DataContext = viewModel;
 
             flightSimInterface.AircraftDataUpdated += FlightSimInterface_AircraftDataUpdated;
             flightSimInterface.FlightPlanUpdated += FlightSimInterface_FlightPlanUpdated;
             flightSimInterface.FlightStatusUpdated += FlightStatusUpdater_FlightStatusUpdated;
 
-            var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "Prepar3D v4 Files");
+            watcher.FileCreated += Watcher_FileCreated;
 
-            watcher = new FileSystemWatcher(folder);
-            watcher.Created += Watcher_Created;
-            watcher.EnableRaisingEvents = true;
+            TextArchiveFolder.Text = storageLogic.ArchiveFolder;
         }
 
         public void DisplayLog(LogWrapper log)
@@ -98,6 +107,8 @@ namespace FlightTracker.Clients.WpfApp
         private void FlightStatusUpdater_FlightStatusUpdated(object sender, FlightStatusUpdatedEventArgs e)
         {
             viewModel.Update(e.FlightStatus);
+
+            ButtonAddStatus.Visibility = flightLogic.FlightRoute.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void ButtonScreenshot_Click(object sender, RoutedEventArgs e)
@@ -105,10 +116,13 @@ namespace FlightTracker.Clients.WpfApp
             flightSimInterface.Screenshot();
         }
 
-        private async void Watcher_Created(object sender, FileSystemEventArgs e)
+        private async void Watcher_FileCreated(object sender, FileCreatedEventArgs e)
         {
-            await Task.Delay(1000).ConfigureAwait(false);
-            await flightLogic.ScreenshotAsync(Path.GetFileName(e.FullPath), File.ReadAllBytes(e.FullPath)).ConfigureAwait(true);
+            var uploaded = await flightLogic.UploadScreenshotAsync(Path.GetFileName(e.FilePath), File.ReadAllBytes(e.FilePath)).ConfigureAwait(true);
+            if (uploaded && !string.IsNullOrWhiteSpace(storageLogic.ArchiveFolder) && Directory.Exists(storageLogic.ArchiveFolder))
+            {
+                File.Move(e.FilePath, Path.Combine(storageLogic.ArchiveFolder, Path.GetFileName(e.FilePath)));
+            }
         }
 
         private async void ButtonSave_Click(object sender, RoutedEventArgs e)
@@ -142,6 +156,32 @@ namespace FlightTracker.Clients.WpfApp
         private async void ButtonDumpFlight_Click(object sender, RoutedEventArgs e)
         {
             await flightLogic.DumpAsync().ConfigureAwait(true);
+        }
+
+        private void ButtonSelectArchive_Click(object sender, RoutedEventArgs e)
+        {
+            using (var dialog = new CommonOpenFileDialog())
+            {
+                dialog.InitialDirectory = watcher.ScreenshotFolderPath;
+                dialog.IsFolderPicker = true;
+                if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+                {
+                    if (dialog.FileName == watcher.ScreenshotFolderPath)
+                    {
+                        MessageBox.Show("Please choose a folder different from the default screenshot folder!");
+                    }
+                    else
+                    {
+                        TextArchiveFolder.Text = dialog.FileName;
+                        storageLogic.ArchiveFolder = dialog.FileName;
+                    }
+                }
+            }
+        }
+
+        private void ButtonAddStatus_Click(object sender, RoutedEventArgs e)
+        {
+            flightLogic.AddNextStatus();
         }
     }
 }

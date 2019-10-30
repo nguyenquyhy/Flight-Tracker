@@ -122,10 +122,26 @@
 
                         <TextBlock Text="Autopilot" />
                         <CheckBox IsChecked="{Binding FlightStatus.IsAutopilotOn}"  />
+
+                        <Button x:Name="ButtonAddStatus" Content="Start Route Recording" Click="ButtonAddStatus_Click" />
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
 
+            <TabItem Header="Settings">
+                <StackPanel Margin="10">
+                    <Label Content="Screenshot Archive" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="TextArchiveFolder" />
+                        <Button Content="..." Grid.Column="1" Width="24" Click="ButtonSelectArchive_Click" />
+                    </Grid>
+                </StackPanel>
+            </TabItem>
+            
             <TabItem Header="Test">
                 <StackPanel Margin="10">
                     <Button Content="Test Storage Connection" Click="ButtonTestStorage_Click" />

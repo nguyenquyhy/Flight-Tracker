@@ -1,5 +1,6 @@
 ﻿using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.Blob;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,12 +11,14 @@ namespace FlightTracker.Clients.Logics.AzureStorage
     public class AzureImageUploader : IImageUploader
     {
         private readonly CloudBlobContainer container;
+        private readonly ILogger<AzureImageUploader> logger;
 
-        public AzureImageUploader(IOptions<AppSettings> settings)
+        public AzureImageUploader(IOptions<AppSettings> settings, ILogger<AzureImageUploader> logger)
         {
             var account = CloudStorageAccount.Parse(settings.Value.AzureStorage.ConnectionString);
             var client = account.CreateCloudBlobClient();
             container = client.GetContainerReference(settings.Value.AzureStorage.ContainerName);
+            this.logger = logger;
         }
 
         private async Task InitializeAsync()
@@ -48,7 +51,10 @@ namespace FlightTracker.Clients.Logics.AzureStorage
             await InitializeAsync();
 
             var blob = container.GetBlockBlobReference(name);
+
+            logger.LogDebug("Uploading image {name} of {length} bytes...", name, image.Length);
             await blob.UploadFromByteArrayAsync(image, 0, image.Length);
+            logger.LogInformation("Uploaded image {name} of {length} bytes...", name, image.Length);
             return blob.Uri.AbsoluteUri;
         }
 

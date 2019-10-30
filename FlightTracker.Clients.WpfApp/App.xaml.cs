@@ -74,6 +74,11 @@ namespace FlightTracker.Clients.WpfApp
             services.AddSingleton<FlightLogic>();
             services.AddSingleton<IImageUploader, AzureImageUploader>();
             services.AddSingleton<TestLogic>();
+            services.AddSingleton<IStorageLogic, StorageLogic>();
+            services.AddSingleton(provider => new FileWatcherLogic(
+                provider.GetService<ILogger<FileWatcherLogic>>(), 
+                provider.GetService<IStorageLogic>(),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "Prepar3D v4 Files")));
 
             services.AddTransient(typeof(MainWindow));
         }

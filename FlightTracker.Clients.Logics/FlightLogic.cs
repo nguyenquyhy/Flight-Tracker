@@ -30,9 +30,11 @@ namespace FlightTracker.Clients.Logics
         private readonly FlightsAPIClient flightsAPIClient;
         private readonly IImageUploader imageUploader;
         private TaskCompletionSource<bool> tcsCrashReset = null;
+        private bool forceStatusAdd = false;
 
         private FlightData flightData = new FlightData();
-        private List<FlightStatus> flightRoute = new List<FlightStatus>();
+
+        public List<FlightStatus> FlightRoute { get; private set; } = new List<FlightStatus>();
 
         private readonly List<AirportData> airports = new List<AirportData>();
 
@@ -69,7 +71,7 @@ namespace FlightTracker.Clients.Logics
             var dataFile = Path.Combine(Directory.GetCurrentDirectory(), "flightdata-" + now + ".json");
             var routeFile = Path.Combine(Directory.GetCurrentDirectory(), "flightroute-" + now + ".json");
             await File.WriteAllTextAsync(dataFile, JsonConvert.SerializeObject(flightData));
-            await File.WriteAllTextAsync(routeFile, JsonConvert.SerializeObject(flightRoute));
+            await File.WriteAllTextAsync(routeFile, JsonConvert.SerializeObject(FlightRoute));
         }
 
         public async Task SaveAsync()
@@ -116,7 +118,7 @@ namespace FlightTracker.Clients.Logics
                 Airline = flightData?.Aircraft?.Airline,
                 FlightNumber = flightData?.Aircraft?.FlightNumber
             };
-            flightRoute = new List<FlightStatus>();
+            FlightRoute = new List<FlightStatus>();
             HandleFlightDataUpdated();
         }
 
@@ -127,20 +129,27 @@ namespace FlightTracker.Clients.Logics
             FlightUpdated?.Invoke(this, new FlightUpdatedEventArgs(flightData));
         }
 
-        public async Task ScreenshotAsync(string name, byte[] image)
+        public async Task<bool> UploadScreenshotAsync(string name, byte[] image)
         {
             try
             {
-                var lastStatus = flightRoute.LastOrDefault();
+                var lastStatus = FlightRoute.LastOrDefault();
                 if (lastStatus != null)
                 {
                     var url = await imageUploader.UploadAsync(name, image);
                     lastStatus.ScreenshotUrl = url;
+                    return true;
+                }
+                else
+                {
+                    logger.LogInformation("Screenshot is skipped because flight is not started.");
+                    return false;
                 }
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Cannot upload screenshot {0}", name);
+                return false;
             }
         }
 
@@ -184,6 +193,11 @@ namespace FlightTracker.Clients.Logics
             }
         }
 
+        public void AddNextStatus()
+        {
+            forceStatusAdd = true;
+        }
+
         private void FlightSimInterface_FlightPlanUpdated(object sender, FlightPlanUpdatedEventArgs e)
         {
             flightData.FlightPlan = e.FlightPlan;
@@ -199,7 +213,7 @@ namespace FlightTracker.Clients.Logics
                 e.FlightStatus.ZuluTime = zuluTime;
                 e.FlightStatus.AbsoluteTime = absoluteTime;
 
-                var lastStatus = flightRoute.LastOrDefault();
+                var lastStatus = FlightRoute.LastOrDefault();
 
                 if (lastStatus != null && lastStatus.IsOnGround && !e.FlightStatus.IsOnGround && flightData.State == FlightState.Started)
                 {
@@ -248,25 +262,29 @@ namespace FlightTracker.Clients.Logics
                         HandleFlightDataUpdated();
                     }
 
-                    // Try to reduce the number of status
-                    if (lastStatus == null && e.FlightStatus.IsOnGround && e.FlightStatus.GroundSpeed < 1f)
-                        return;
-                    else if (lastStatus != null && lastStatus.ScreenshotUrl == null)
+                    // Try to reduce the number of status by skipping status recording
+                    if (!forceStatusAdd)
                     {
-                        if (e.FlightStatus.AltitudeAboveGround > 1000 && e.FlightStatus.SimTime - lastStatus.SimTime < 1f)
+                        if (lastStatus == null && e.FlightStatus.IsOnGround && e.FlightStatus.GroundSpeed < 1f)
                             return;
-                        if (e.FlightStatus.AltitudeAboveGround > 5000 && e.FlightStatus.SimTime - lastStatus.SimTime < 2f)
-                            return;
-                        if (e.FlightStatus.AltitudeAboveGround > 10000 && e.FlightStatus.SimTime - lastStatus.SimTime < 3f)
-                            return;
-                        if (e.FlightStatus.AltitudeAboveGround > 15000 && e.FlightStatus.SimTime - lastStatus.SimTime < 4f)
-                            return;
-                        if (e.FlightStatus.AltitudeAboveGround > 20000 && e.FlightStatus.SimTime - lastStatus.SimTime < 5f)
-                            return;
+                        else if (lastStatus != null && lastStatus.ScreenshotUrl == null)
+                        {
+                            if (e.FlightStatus.AltitudeAboveGround > 1000 && e.FlightStatus.SimTime - lastStatus.SimTime < 1f)
+                                return;
+                            if (e.FlightStatus.AltitudeAboveGround > 5000 && e.FlightStatus.SimTime - lastStatus.SimTime < 2f)
+                                return;
+                            if (e.FlightStatus.AltitudeAboveGround > 10000 && e.FlightStatus.SimTime - lastStatus.SimTime < 3f)
+                                return;
+                            if (e.FlightStatus.AltitudeAboveGround > 15000 && e.FlightStatus.SimTime - lastStatus.SimTime < 4f)
+                                return;
+                            if (e.FlightStatus.AltitudeAboveGround > 20000 && e.FlightStatus.SimTime - lastStatus.SimTime < 5f)
+                                return;
+                        }
                     }
                 }
 
-                flightRoute.Add(e.FlightStatus);
+                FlightRoute.Add(e.FlightStatus);
+                forceStatusAdd = false;
 
                 if ((flightData.State == FlightState.Enroute || flightData.State == FlightState.Arrived)
                     && (!lastSaveAttempt.HasValue || DateTime.Now - lastSaveAttempt.Value > TimeSpan.FromMilliseconds(SaveDelay)))
@@ -351,9 +369,9 @@ namespace FlightTracker.Clients.Logics
                     flightData = newData;
                     HandleFlightDataUpdated();
 
-                    if (flightRoute.Any())
+                    if (FlightRoute.Any())
                     {
-                        await flightsAPIClient.PostRouteAsync(flightData.Id, flightRoute);
+                        await flightsAPIClient.PostRouteAsync(flightData.Id, FlightRoute);
                     }
                 }
                 else
@@ -362,9 +380,9 @@ namespace FlightTracker.Clients.Logics
                     {
                         await flightsAPIClient.UpdateFlightAsync(flightData.Id, flightData);
                     }
-                    if (flightRoute.Any())
+                    if (FlightRoute.Any())
                     {
-                        await flightsAPIClient.PostRouteAsync(flightData.Id, flightRoute);
+                        await flightsAPIClient.PostRouteAsync(flightData.Id, FlightRoute);
                     }
                 }
                 
