@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -129,15 +130,16 @@ namespace FlightTracker.Clients.Logics
             FlightUpdated?.Invoke(this, new FlightUpdatedEventArgs(flightData));
         }
 
+        private readonly ConcurrentQueue<string> screenshotsQueue = new ConcurrentQueue<string>();
+
         public async Task<bool> UploadScreenshotAsync(string name, byte[] image)
         {
             try
             {
-                var lastStatus = FlightRoute.LastOrDefault();
-                if (lastStatus != null)
+                if (FlightRoute.Count > 0)
                 {
                     var url = await imageUploader.UploadAsync(name, image);
-                    lastStatus.ScreenshotUrl = url;
+                    screenshotsQueue.Enqueue(url);
                     return true;
                 }
                 else
@@ -212,6 +214,10 @@ namespace FlightTracker.Clients.Logics
                 e.FlightStatus.LocalTime = localTime;
                 e.FlightStatus.ZuluTime = zuluTime;
                 e.FlightStatus.AbsoluteTime = absoluteTime;
+                if (screenshotsQueue.TryDequeue(out var screenshot))
+                {
+                    e.FlightStatus.ScreenshotUrl = screenshot;
+                }
 
                 var lastStatus = FlightRoute.LastOrDefault();
 
@@ -263,7 +269,7 @@ namespace FlightTracker.Clients.Logics
                     }
 
                     // Try to reduce the number of status by skipping status recording
-                    if (!forceStatusAdd)
+                    if (!forceStatusAdd && string.IsNullOrEmpty(screenshot))
                     {
                         if (lastStatus == null && e.FlightStatus.IsOnGround && e.FlightStatus.GroundSpeed < 1f)
                             return;
@@ -289,6 +295,7 @@ namespace FlightTracker.Clients.Logics
                 if ((flightData.State == FlightState.Enroute || flightData.State == FlightState.Arrived)
                     && (!lastSaveAttempt.HasValue || DateTime.Now - lastSaveAttempt.Value > TimeSpan.FromMilliseconds(SaveDelay)))
                 {
+                    // Throttle save attempt
                     await AddOrUpdateFlightAsync();
                 }
             }
