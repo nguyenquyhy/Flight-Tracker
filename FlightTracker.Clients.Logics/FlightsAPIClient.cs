@@ -16,10 +16,10 @@ namespace FlightTracker.Clients.Logics
         private readonly string baseUrl;
         private readonly HttpClient httpClient;
 
-        public FlightsAPIClient(IOptions<AppSettings> settings)
+        public FlightsAPIClient(IOptions<AppSettings> settings, HttpClient httpClient)
         {
             baseUrl = settings.Value.BaseUrl;
-            httpClient = new HttpClient();
+            this.httpClient = httpClient;
         }
 
         public async Task<FlightData> AddFlightAsync(FlightData data)

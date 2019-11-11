@@ -159,6 +159,16 @@
         <StackPanel Grid.Row="2">
             <Label Content="Flight Name" />
             <TextBox Text="{Binding Title, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" TextChanged="TextBox_TextChanged" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="40" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Click="ButtonDecreaseSimRate_Click">Decrease Sim Rate</Button>
+                <TextBox Grid.Column="1" Text="{Binding FlightStatus.SimRate}" TextAlignment="Center" />
+                <Button Grid.Column="2" Click="ButtonIncreaseSimRate_Click">Increase Sim Rate</Button>
+            </Grid>
             <Button Click="ButtonScreenshot_Click">Screenshot</Button>
             <Button Click="ButtonSave_Click">Save Flight</Button>
             <Button Click="ButtonSaveAndNew_Click">New Flight</Button>

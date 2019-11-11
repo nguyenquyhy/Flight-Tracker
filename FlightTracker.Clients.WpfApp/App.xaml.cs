@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Serilog;
 using System;
 using System.IO;
+using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
@@ -70,6 +71,7 @@ namespace FlightTracker.Clients.WpfApp
             services.AddSingleton<SignalRLogic>();
             services.AddSingleton<SimConnectLogic>();
             services.AddSingleton<IFlightSimInterface>(provider => provider.GetRequiredService<SimConnectLogic>());
+            services.AddSingleton(new HttpClient());
             services.AddSingleton<FlightsAPIClient>();
             services.AddSingleton<FlightLogic>();
             services.AddSingleton<IImageUploader, AzureImageUploader>();

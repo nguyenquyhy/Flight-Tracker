@@ -116,6 +116,16 @@ namespace FlightTracker.Clients.WpfApp
             flightSimInterface.Screenshot();
         }
 
+        private void ButtonDecreaseSimRate_Click(object sender, RoutedEventArgs e)
+        {
+            flightSimInterface.DecreaseSimRate();
+        }
+
+        private void ButtonIncreaseSimRate_Click(object sender, RoutedEventArgs e)
+        {
+            flightSimInterface.IncreaseSimRate();
+        }
+
         private async void Watcher_FileCreated(object sender, FileCreatedEventArgs e)
         {
             var uploaded = await flightLogic.UploadScreenshotAsync(Path.GetFileName(e.FilePath), File.ReadAllBytes(e.FilePath)).ConfigureAwait(true);

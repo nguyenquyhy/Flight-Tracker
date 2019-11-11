@@ -18,6 +18,8 @@ namespace FlightTracker.Clients.Logics
         event EventHandler Closed;
 
         void Screenshot();
+        void IncreaseSimRate();
+        void DecreaseSimRate();
     }
 
     public class AircraftDataUpdatedEventArgs : EventArgs
@@ -66,9 +68,9 @@ namespace FlightTracker.Clients.Logics
 
     public class FlightStatusUpdatedEventArgs : EventArgs
     {
-        public FlightStatus FlightStatus { get; private set; }
+        public ClientFlightStatus FlightStatus { get; private set; }
 
-        public FlightStatusUpdatedEventArgs(FlightStatus flightStatus)
+        public FlightStatusUpdatedEventArgs(ClientFlightStatus flightStatus)
         {
             FlightStatus = flightStatus;
         }

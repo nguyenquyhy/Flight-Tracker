@@ -38,7 +38,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Data", "Data", "{C96F747C-1
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlightTracker.Web.Data.Migrators", "FlightTracker.Web.Data.Migrators\FlightTracker.Web.Data.Migrators.csproj", "{3BAD1456-9E7D-4A38-8095-DCC86AA54F89}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlightTracker.Web.Data.Tests", "FlightTracker.Web.Data.Tests\FlightTracker.Web.Data.Tests.csproj", "{C2D38D89-C975-4250-A63B-3F73A518B469}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlightTracker.Web.Data.Tests", "FlightTracker.Web.Data.Tests\FlightTracker.Web.Data.Tests.csproj", "{C2D38D89-C975-4250-A63B-3F73A518B469}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{F7E97465-98CA-40FF-9502-2785473FAB2F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlightTracker.Tests.Integration", "FlightTracker.Tests.Integration\FlightTracker.Tests.Integration.csproj", "{8976B37D-9615-43FE-B085-E92B021EB5EF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -98,6 +102,10 @@ Global
 		{C2D38D89-C975-4250-A63B-3F73A518B469}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C2D38D89-C975-4250-A63B-3F73A518B469}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C2D38D89-C975-4250-A63B-3F73A518B469}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8976B37D-9615-43FE-B085-E92B021EB5EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8976B37D-9615-43FE-B085-E92B021EB5EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8976B37D-9615-43FE-B085-E92B021EB5EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8976B37D-9615-43FE-B085-E92B021EB5EF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -114,7 +122,8 @@ Global
 		{04F99DEB-C5CC-4736-8B7A-58E4AD1EEB20} = {C96F747C-147F-4B1E-A29C-A483DEA55F15}
 		{C96F747C-147F-4B1E-A29C-A483DEA55F15} = {DB6CA6A4-C5E1-4E13-8E7C-852A929A3F1E}
 		{3BAD1456-9E7D-4A38-8095-DCC86AA54F89} = {C96F747C-147F-4B1E-A29C-A483DEA55F15}
-		{C2D38D89-C975-4250-A63B-3F73A518B469} = {C96F747C-147F-4B1E-A29C-A483DEA55F15}
+		{C2D38D89-C975-4250-A63B-3F73A518B469} = {F7E97465-98CA-40FF-9502-2785473FAB2F}
+		{8976B37D-9615-43FE-B085-E92B021EB5EF} = {F7E97465-98CA-40FF-9502-2785473FAB2F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D6DC8EC1-88FC-4369-ADB8-D3B9170AC33B}

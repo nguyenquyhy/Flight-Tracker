@@ -14,7 +14,10 @@ namespace FlightTracker.Clients.Logics
         FLIGHTPLAN_ACTIVATED,
         FLIGHTPLAN_DEACTIVATED,
         POSITION_CHANGED,
-        SCREENSHOT
+        SCREENSHOT,
+
+        SIM_RATE_INCREASE,
+        SIM_RATE_DECREASE
     };
 
     enum GROUPID
@@ -80,6 +83,7 @@ namespace FlightTracker.Clients.Logics
     struct FlightStatusStruct
     {
         public double SimTime;
+        public int SimRate;
 
         public double Latitude;
         public double Longitude;

@@ -107,6 +107,9 @@ namespace FlightTracker.Clients.Logics
             simconnect.RequestSystemState(DATA_REQUESTS.FLIGHT_PLAN, "FlightPlan");
 
             simconnect.MapClientEventToSimEvent(EVENTS.SCREENSHOT, "CAPTURE_SCREENSHOT");
+
+            simconnect.MapClientEventToSimEvent(EVENTS.SIM_RATE_INCREASE, "SIM_RATE_INCR");
+            simconnect.MapClientEventToSimEvent(EVENTS.SIM_RATE_DECREASE, "SIM_RATE_DECR");
         }
 
         public void CloseConnection()
@@ -173,6 +176,12 @@ namespace FlightTracker.Clients.Logics
                 "Seconds",
                 SIMCONNECT_DATATYPE.FLOAT64,
                 0.0f,
+                SimConnect.SIMCONNECT_UNUSED);
+            simconnect.AddToDataDefinition(DEFINITIONS.FlightStatus, 
+                "SIMULATION RATE", 
+                "number", 
+                SIMCONNECT_DATATYPE.INT32, 
+                0.0f, 
                 SimConnect.SIMCONNECT_UNUSED);
 
             simconnect.AddToDataDefinition(DEFINITIONS.FlightStatus,
@@ -390,6 +399,16 @@ namespace FlightTracker.Clients.Logics
             simconnect.TransmitClientEvent((uint)SimConnect.SIMCONNECT_OBJECT_ID_USER, EVENTS.SCREENSHOT, (uint)0, GROUPID.FLAG, SIMCONNECT_EVENT_FLAG.GROUPID_IS_PRIORITY);
         }
 
+        public void IncreaseSimRate()
+        {
+            simconnect.TransmitClientEvent((uint)SimConnect.SIMCONNECT_OBJECT_ID_USER, EVENTS.SIM_RATE_INCREASE, 0, GROUPID.FLAG, SIMCONNECT_EVENT_FLAG.GROUPID_IS_PRIORITY);
+        }
+
+        public void DecreaseSimRate()
+        {
+            simconnect.TransmitClientEvent((uint)SimConnect.SIMCONNECT_OBJECT_ID_USER, EVENTS.SIM_RATE_DECREASE, 0, GROUPID.FLAG, SIMCONNECT_EVENT_FLAG.GROUPID_IS_PRIORITY);
+        }
+
         private void Simconnect_OnRecvSimobjectData(SimConnect sender, SIMCONNECT_RECV_SIMOBJECT_DATA data)
         {
             switch (data.dwRequestID)
@@ -455,9 +474,10 @@ namespace FlightTracker.Clients.Logics
                         if (flightStatus.HasValue)
                         {
                             FlightStatusUpdated?.Invoke(this, new FlightStatusUpdatedEventArgs(
-                                new FlightStatus
+                                new ClientFlightStatus
                                 {
                                     SimTime = flightStatus.Value.SimTime,
+                                    SimRate = flightStatus.Value.SimRate,
                                     Latitude = flightStatus.Value.Latitude,
                                     Longitude = flightStatus.Value.Longitude,
                                     Altitude = flightStatus.Value.Altitude,
