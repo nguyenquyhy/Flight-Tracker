@@ -61,6 +61,9 @@ namespace FlightTracker.Clients.Logics
 
                     if (File.Exists(e.FullPath))
                     {
+                        // Wait for file to complete writing
+                        await Task.Delay(500);
+
                         while (!IsAvailableForReading(e.FullPath))
                         {
                             logger.LogInformation("File is not available for reading. Wait for 1s...");
