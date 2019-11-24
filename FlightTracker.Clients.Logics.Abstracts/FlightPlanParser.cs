@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.IO;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
@@ -234,72 +235,15 @@ namespace FlightTracker.Clients.Logics
         }
     }
 
-    /// <remarks/>
-    [System.SerializableAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true)]
+    [Serializable()]
+    [DesignerCategory("code")]
+    [XmlType(AnonymousType = true)]
     public partial class SimBaseDocumentFlightPlanFlightPlanAppVersion
     {
-
-        private byte appVersionMajorField;
-
-        private byte appVersionMinorField;
-
-        private byte appVersionRevisionField;
-
-        private ushort appVersionBuildField;
-
-        /// <remarks/>
-        public byte AppVersionMajor
-        {
-            get
-            {
-                return this.appVersionMajorField;
-            }
-            set
-            {
-                this.appVersionMajorField = value;
-            }
-        }
-
-        /// <remarks/>
-        public byte AppVersionMinor
-        {
-            get
-            {
-                return this.appVersionMinorField;
-            }
-            set
-            {
-                this.appVersionMinorField = value;
-            }
-        }
-
-        /// <remarks/>
-        public byte AppVersionRevision
-        {
-            get
-            {
-                return this.appVersionRevisionField;
-            }
-            set
-            {
-                this.appVersionRevisionField = value;
-            }
-        }
-
-        /// <remarks/>
-        public ushort AppVersionBuild
-        {
-            get
-            {
-                return this.appVersionBuildField;
-            }
-            set
-            {
-                this.appVersionBuildField = value;
-            }
-        }
+        public ushort AppVersionMajor { get; set; }
+        public ushort AppVersionMinor { get; set; }
+        public ushort AppVersionRevision { get; set; }
+        public ushort AppVersionBuild { get; set; }
     }
 
     /// <remarks/>

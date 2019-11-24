@@ -14,10 +14,10 @@
 
   <ItemGroup>
     <Reference Condition="'$(Configuration)' == 'Debug'" Include="LockheedMartin.Prepar3D.SimConnect">
-      <HintPath>C:\Program Files\Lockheed Martin\Prepar3D v4 SDK 4.5.12.30293\lib\SimConnect\managed\LockheedMartin.Prepar3D.SimConnect.Debug.dll</HintPath>
+      <HintPath>C:\Program Files\Lockheed Martin\Prepar3D v4 SDK 4.5.13.32097\lib\SimConnect\managed\LockheedMartin.Prepar3D.SimConnect.Debug.dll</HintPath>
     </Reference>
     <Reference Condition="'$(Configuration)' == 'Release'" Include="LockheedMartin.Prepar3D.SimConnect">
-      <HintPath>C:\Program Files\Lockheed Martin\Prepar3D v4 SDK 4.5.12.30293\lib\SimConnect\managed\LockheedMartin.Prepar3D.SimConnect.dll</HintPath>
+      <HintPath>C:\Program Files\Lockheed Martin\Prepar3D v4 SDK 4.5.13.32097\lib\SimConnect\managed\LockheedMartin.Prepar3D.SimConnect.dll</HintPath>
     </Reference>
   </ItemGroup>
 </Project>
