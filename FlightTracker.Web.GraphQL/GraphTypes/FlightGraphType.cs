@@ -37,6 +37,13 @@ namespace FlightTracker.Web
 
             Field(o => o.VideoUrl, nullable: true);
 
+            FieldAsync<BooleanGraphType>("hasScreenshots",
+                resolve: async context =>
+                {
+                    var route = await flightStorage.GetRouteAsync(context.Source.Id);
+                    return route.Any(o => string.IsNullOrEmpty(o.ScreenshotUrl));
+                });
+
             FieldAsync<ListGraphType<FlightStatusGraphType>>("route",
                 arguments: new QueryArguments(
                     new QueryArgument<UIntGraphType> { Name = "last" }

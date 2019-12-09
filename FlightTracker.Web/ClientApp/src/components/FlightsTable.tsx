@@ -137,14 +137,13 @@ class Row extends Component<RowProps, RowState> {
     }
 
     public render() {
-        const videoIcon = <StyledIcon xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke="#d6c86b"><path d="M22 1v2h-2v-2h-2v4h-12v-4h-2v2h-2v-2h-2v22h2v-2h2v2h2v-4h12v4h2v-2h2v2h2v-22h-2zm-18 18h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2v-2h2v2zm14 9h-12v-8h12v8zm4 3h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2v-2h2v2z" /></StyledIcon>;
 
         const flight = this.props.flight;
         return <StyledRow state={flight.state}>
             <td><Link to={`flights/${flight.id}`}>{new Date(flight.startDateTime).toLocaleDateString()}</Link></td>
             <td><Link to={`flights/${flight.id}`}>{this.renderTime(flight)}</Link></td>
             <td><Link to={`flights/${flight.id}`}>{flight.flightNumber}</Link></td>
-            <td><Link to={`flights/${flight.id}`}>{!!flight.videoUrl && videoIcon}{flight.title || 'Unnamed'}</Link></td>
+            <td><Link to={`flights/${flight.id}`}>{!!flight.hasScreenshots && screenshotIcon}{!!flight.videoUrl && videoIcon}{flight.title || 'Unnamed'}</Link></td>
             <td><Link to={`flights/${flight.id}`}>{flight.airportFrom}</Link></td>
             <td><Link to={`flights/${flight.id}`}>{flight.airportTo}</Link></td>
             <td><Link to={`flights/${flight.id}`}>{flight.aircraft ? flight.aircraft.title : ''}</Link></td>
@@ -170,3 +169,23 @@ ${props =>
             props.state === 'ENROUTE' ? css`color: white;` : ''}
 }
 `
+
+const videoIcon = <StyledIcon xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke="#d6c86b"><path d="M22 1v2h-2v-2h-2v4h-12v-4h-2v2h-2v-2h-2v22h2v-2h2v2h2v-4h12v4h2v-2h2v2h2v-22h-2zm-18 18h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2v-2h2v2zm14 9h-12v-8h12v8zm4 3h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2v-2h2v2z" /></StyledIcon>;
+const screenshotIcon = <StyledIcon xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 512 512" fill="#d6c86b"><g>
+	<path d="M60,150.5c0,11.046,8.954,20,20,20s20-8.954,20-20v-50h49c11.046,0,20-8.954,20-20s-8.954-20-20-20h-49v-40
+		c0-11.046-8.954-20-20-20s-20,8.954-20,20v40H20c-11.046,0-20,8.954-20,20s8.954,20,20,20h40V150.5z"/>
+	<path d="M432,210.5c-11.046,0-20,8.954-20,20v52c0,11.046,8.954,20,20,20c11.046,0,20-8.954,20-20v-52
+		C452,219.454,443.046,210.5,432,210.5z"/>
+	<path d="M362,100.5h10c22.056,0,40,17.944,40,40v10c0,11.046,8.954,20,20,20c11.046,0,20-8.954,20-20v-10
+		c0-44.112-35.888-80-80-80h-10c-11.046,0-20,8.954-20,20S350.954,100.5,362,100.5z"/>
+	<path d="M80,210.5c-11.046,0-20,8.954-20,20v52c0,11.046,8.954,20,20,20s20-8.954,20-20v-52C100,219.454,91.046,210.5,80,210.5z"
+		/>
+	<path d="M150,411.5h-10c-22.056,0-40-17.944-40-40v-9c0-11.046-8.954-20-20-20s-20,8.954-20,20v9c0,44.112,35.888,80,80,80h10
+		c11.046,0,20-8.954,20-20C170,420.454,161.046,411.5,150,411.5z"/>
+	<path d="M492,411.5h-40v-49c0-11.046-8.954-20-20-20c-11.046,0-20,8.954-20,20v49h-50c-11.046,0-20,8.954-20,20
+		c0,11.046,8.954,20,20,20h50v40c0,11.046,8.954,20,20,20c11.046,0,20-8.954,20-20v-40h40c11.046,0,20-8.954,20-20
+		C512,420.454,503.046,411.5,492,411.5z"/>
+	<path d="M282,60.5h-52c-11.046,0-20,8.954-20,20s8.954,20,20,20h52c11.046,0,20-8.954,20-20S293.046,60.5,282,60.5z"/>
+	<path d="M282,411.5h-52c-11.046,0-20,8.954-20,20c0,11.046,8.954,20,20,20h52c11.046,0,20-8.954,20-20
+		C302,420.454,293.046,411.5,282,411.5z"/>
+</g></StyledIcon>;

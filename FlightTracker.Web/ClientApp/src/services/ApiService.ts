@@ -63,6 +63,7 @@ export default class ApiService {
         }
         state
         videoUrl
+        hasScreenshots
     }
 }`
 

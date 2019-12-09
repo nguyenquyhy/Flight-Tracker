@@ -33,6 +33,7 @@ export interface FlightData {
     route?: FlightStatus[];
 
     videoUrl?: string;
+    hasScreenshots?: boolean;
 
     state: string;
 }
