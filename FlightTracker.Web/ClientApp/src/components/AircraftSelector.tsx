@@ -33,7 +33,7 @@ export default class AircraftSelector extends Component<Props, State> {
         this.setState({
             aircrafts: aircrafts.map(aircraft => ({
                 aircraft: aircraft,
-                selected: aircraft.tailNumber == this.props.selected.tailNumber
+                selected: aircraft.tailNumber === this.props.selected.tailNumber
             }))
         })
     }
