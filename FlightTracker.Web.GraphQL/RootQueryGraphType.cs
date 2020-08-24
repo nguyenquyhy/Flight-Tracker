@@ -1,5 +1,6 @@
 ﻿using FlightTracker.DTOs;
 using FlightTracker.Web.Data;
+using GraphQL;
 using GraphQL.Types;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +14,7 @@ namespace FlightTracker.Web
             FieldAsync<ListGraphType<FlightGraphType>>(
                 "flights",
                 arguments: new QueryArguments(
-                    new QueryArgument(typeof(IntGraphType)) { Name = "last" }
+                    new QueryArgument<IntGraphType> { Name = "last" }
                 ),
                 resolve: async context =>
                 {
@@ -21,9 +22,10 @@ namespace FlightTracker.Web
 
                     data = data.OrderByDescending(a => a.AddedDateTime);
 
-                    if (context.Arguments.TryGetValue<int>("last", out var last))
+                    var last = context.GetArgument<int?>("last");
+                    if (last != null)
                     {
-                        data = data.Take(last);
+                        data = data.Take(last.Value);
                     }
 
                     return data;
@@ -33,7 +35,7 @@ namespace FlightTracker.Web
             FieldAsync<FlightGraphType>(
                  "flight",
                  arguments: new QueryArguments(
-                     new QueryArgument(typeof(NonNullGraphType<StringGraphType>)) { Name = "id" }
+                     new QueryArgument<NonNullGraphType<StringGraphType>> { Name = "id" }
                  ),
                  resolve: async context =>
                  {
@@ -59,7 +61,7 @@ namespace FlightTracker.Web
             FieldAsync<AircraftGraphType>(
                 "aircraft",
                 arguments: new QueryArguments(
-                    new QueryArgument(typeof(NonNullGraphType<StringGraphType>)) { Name = "tailNumber" }
+                    new QueryArgument<NonNullGraphType<StringGraphType>> { Name = "tailNumber" }
                 ),
                 resolve: async context =>
                 {

@@ -249,7 +249,11 @@ namespace FlightTracker.Web.Data
             try
             {
                 await sm.WaitAsync().ConfigureAwait(false);
-                if (File.Exists(filePath)) File.Move(filePath, filePath + ".bak", true);
+                if (File.Exists(filePath))
+                {
+                    if (File.Exists(filePath + ".bak")) File.Delete(filePath + ".bak");
+                    File.Move(filePath, filePath + ".bak");
+                }
                 var list = data.Select(o => o.Value);
                 await File.WriteAllTextAsync(filePath, JsonConvert.SerializeObject(list, new JsonSerializerSettings
                 {

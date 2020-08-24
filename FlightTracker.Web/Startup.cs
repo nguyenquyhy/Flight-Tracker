@@ -60,6 +60,7 @@ namespace FlightTracker.Web
                 //.AddGraphTypes(typeof(RootSchema).Assembly)
                 .AddDataLoader()
                 .AddWebSockets()
+                .AddSystemTextJson()
                 .AddUserContextBuilder(context =>
                 {
                     return new Dictionary<string, object>

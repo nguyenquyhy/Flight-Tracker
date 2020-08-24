@@ -1,5 +1,6 @@
 ﻿using FlightTracker.DTOs;
 using FlightTracker.Web.Data;
+using GraphQL;
 using GraphQL.Types;
 using System.Linq;
 
@@ -53,7 +54,9 @@ namespace FlightTracker.Web
                     System.Diagnostics.Debug.WriteLine($"[{System.DateTime.Now.ToString("HH:mm:ss")}] Start getting route of {context.Source.Id}...");
                     var route = await flightStorage.GetRouteAsync(context.Source.Id);
                     System.Diagnostics.Debug.WriteLine($"[{System.DateTime.Now.ToString("HH:mm:ss")}] Got route of {context.Source.Id}.");
-                    if (context.Arguments.TryGetValue<uint>("last", out var last))
+
+                    var last = context.GetArgument<int?>("last");
+                    if (last != null)
                     {
                         route = route.TakeLast((int)last).ToList();
                         System.Diagnostics.Debug.WriteLine($"[{System.DateTime.Now.ToString("HH:mm:ss")}] Filtered route of {context.Source.Id}.");

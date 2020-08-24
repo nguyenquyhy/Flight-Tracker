@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <RootNamespace>FlightTracker.Web</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="GraphQL" Version="3.0.0-preview-1271" />
-    <PackageReference Include="GraphQL.Authorization" Version="3.0.38-preview-38" />
+    <PackageReference Include="GraphQL" Version="3.0.0-preview-1719" />
+    <PackageReference Include="GraphQL.Authorization" Version="3.0.40-preview-40" />
   </ItemGroup>
 
   <ItemGroup>

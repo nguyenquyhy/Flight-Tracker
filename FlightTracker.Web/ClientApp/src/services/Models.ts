@@ -52,7 +52,7 @@ export interface AircraftData {
     airline: string;
     flightNumber: string;
 
-    pictureUrls: string[];
+    pictureUrls?: string[];
 }
 
 export interface FlightPlan {

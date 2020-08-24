@@ -1,5 +1,6 @@
 ﻿using FlightTracker.DTOs;
 using FlightTracker.Web.Data;
+using GraphQL;
 using GraphQL.Authorization;
 using GraphQL.Types;
 using System.Collections.Generic;
@@ -50,27 +51,27 @@ namespace FlightTracker.Web
                 resolve: ResolveDeleteFlight).AuthorizeWith("Authenticated");
         }
 
-        private async Task<object> ResolveAddFlight(ResolveFieldContext<object> context)
+        private async Task<object> ResolveAddFlight(IResolveFieldContext<object> context)
         {
             var flightInput = context.GetArgument<FlightData>("flight");
             return await flightStorage.AddFlightAsync(flightInput);
         }
 
-        private async Task<object> ResolveUpdateFlight(ResolveFieldContext<object> context)
+        private async Task<object> ResolveUpdateFlight(IResolveFieldContext<object> context)
         {
             var id = context.GetArgument<string>("id");
             var flightInput = context.GetArgument<FlightData>("flight");
             return await flightStorage.InsertOrUpdateFlightAsync(id, flightInput);
         }
 
-        private async Task<object> ResolvePatchFlight(ResolveFieldContext<object> context)
+        private async Task<object> ResolvePatchFlight(IResolveFieldContext<object> context)
         {
             var id = context.GetArgument<string>("id");
             var flightInput = context.GetArgument<FlightData>("flight");
             return await flightStorage.PatchAsync(id, flightInput);
         }
 
-        private async Task<object> ResolveAppendRoute(ResolveFieldContext<object> context)
+        private async Task<object> ResolveAppendRoute(IResolveFieldContext<object> context)
         {
             var id = context.GetArgument<string>("id");
             var route = (await flightStorage.GetRouteAsync(id))?.ToList();
@@ -93,7 +94,7 @@ namespace FlightTracker.Web
             return null;
         }
 
-        private async Task<object> ResolveDeleteFlight(ResolveFieldContext<object> context)
+        private async Task<object> ResolveDeleteFlight(IResolveFieldContext<object> context)
         {
             var id = context.GetArgument<string>("id");
             return await flightStorage.DeleteFlightAsync(id);

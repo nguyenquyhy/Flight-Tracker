@@ -28,13 +28,13 @@ export default (props: AircraftCardsProps) => {
         {props.aircrafts.map(aircraft => {
             index++;
             return <StyledItem key={aircraft.tailNumber}>
-                {aircraft.pictureUrls.length ?
+                {aircraft.pictureUrls && aircraft.pictureUrls.length ?
                     <Slider {...properties} autoplaySpeed={3000 + (index % 5) * 200}>
                         {aircraft.pictureUrls.map(pictureUrl => (
                             <div key={pictureUrl}>
                                 <img src={pictureUrl} alt={aircraft.title + " photo"} onClick={() => SimpleLightBox.open({
                                     items: aircraft.pictureUrls,
-                                    startAt: aircraft.pictureUrls.findIndex(u => u === pictureUrl)
+                                    startAt: aircraft.pictureUrls ? aircraft.pictureUrls.findIndex(u => u === pictureUrl) : 0
                                 })} />
                             </div>
                         ))}

@@ -1,5 +1,6 @@
 ﻿using FlightTracker.DTOs;
 using FlightTracker.Web.Data;
+using GraphQL;
 using GraphQL.Types;
 using System.Linq;
 
@@ -24,9 +25,10 @@ namespace FlightTracker.Web
                 resolve: async context =>
                 {
                     var list = await flightStorage.GetAircraftPictureUrlsAsync(context.Source.TailNumber);
-                    if (context.Arguments.TryGetValue<int>("random", out var random))
+                    var random = context.GetArgument<int?>("random");
+                    if (random != null)
                     {
-                        list = list.Shuffle().Take(random).ToList();
+                        list = list.Shuffle().Take(random.Value).ToList();
                     }
                     return list;
                 });
